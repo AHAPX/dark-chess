@@ -1,0 +1,4 @@
+Flask==0.10.1
+peewee==2.8.0
+redis==2.10.5
+validate-email==1.3
