@@ -1,4 +1,5 @@
 import logging
+import pickle
 
 import engine
 import models
@@ -17,6 +18,7 @@ class Game(object):
     def __init__(self, white_token, black_token):
         self.white = white_token
         self.black = black_token
+        self._loaded_by = None
 
     @classmethod
     def new_game(cls, white_token, black_token, white_user=None, black_user=None):
@@ -35,22 +37,31 @@ class Game(object):
     def load_game(cls, token):
         try:
             game_id, color, enemy_token = pickle.loads(get_cache(token))
-            if color == WHITE:
+            if color == consts.WHITE:
                 wt, bt = token, enemy_token
-            else:
+            elif color == consts.BLACK:
                 wt, bt = enemy_token, token
             game = cls(wt, bt)
             game.model = models.Game.get(pk=game_id)
-            game.game = engine.Game(game.model.state)
+            game.game = engine.Game(game.model.state, game.model.next_color)
+            game._loaded_by = color
         except:
-            raise error.GameNotFoundError
+            raise errors.GameNotFoundError
         return game
 
-    def get_board(self, color):
-        return BoardSerializer(self.game.board, color).to_json()
+    def get_color(self, color=None):
+        if color is None:
+            color = self._loaded_by
+        if color not in (consts.WHITE, consts.BLACK):
+            raise ValueError('color is not declared')
+        return color
 
-    def move(self, color, coor1, coor2):
+    def get_board(self, color=None):
+        return BoardSerializer(self.game.board, self.get_color(color)).to_json()
+
+    def move(self, coor1, coor2, color=None):
         try:
+            color = self.get_color(color)
             figure, move = self.game.move(color, coors2pos(coor1), coors2pos(coor2))
         except errors.WrongTurnError:
             return send_error('it is not your turn')
@@ -65,7 +76,7 @@ class Game(object):
         else:
             try:
                 self.model.add_move(figure.symbol, move)
-                self.model.save_state(str(self.game.board))
+                self.model.save_state(str(self.game.board), self.game.current_player)
             except Exception as exc:
                 logger.error(exc)
                 return send_error('system error')

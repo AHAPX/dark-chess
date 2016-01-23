@@ -2,9 +2,11 @@ from functools import wraps
 
 from flask import request
 
+import errors
 from models import User
 from cache import get_cache
 from serializers import send_error
+from game import Game
 
 
 def authenticated(f):
@@ -26,4 +28,15 @@ def authenticated(f):
                     request.auth = token
                     return f(*args, **kwargs)
         return send_error('not authorized')
+    return decorated
+
+
+def with_game(f):
+    @wraps(f)
+    def decorated(token, *args, **kwargs):
+        try:
+            game = Game.load_game(token)
+        except errors.GameNotFoundError:
+            return send_error('game not found')
+        return f(game, *args, **kwargs)
     return decorated

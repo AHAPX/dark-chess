@@ -1,7 +1,7 @@
 from helpers import onBoard, invertColor, pos2coors, coors2pos
 from errors import (
     OutOfBoardError, CellIsBusyError, WhiteWon, BlackWon, Draw,
-    WrongMoveError, NotFoundError
+    WrongMoveError, NotFoundError, WrongTurnError, WrongFigureError
 )
 from consts import *
 
@@ -220,13 +220,8 @@ class Figure(object):
 
 
 class Pawn(Figure):
-    _symbol = ''
+    _symbol = 'P'
     kind = PAWN
-
-    def __str__(self):
-        if self.color == WHITE:
-            return 'P'
-        return 'p'
 
     def updateMoves(self):
         moves = []
@@ -381,9 +376,9 @@ class King(Figure):
 
 class Game(object):
 
-    def __init__(self, figures=None):
+    def __init__(self, figures=None, current_player=WHITE):
         self.board = Board(figures)
-        self.current_player = WHITE
+        self.current_player = current_player
 
     def move(self, color, pos1, pos2):
         if color != self.current_player:
@@ -394,9 +389,9 @@ class Game(object):
         if figure.color != color:
             raise WrongFigureError
         rooked = isinstance(figure, King) and figure.try_to_castle(*pos2)
-        if not rooked
+        if not rooked:
             figure.move(*pos2)
-            result = figure, '{}-{}'.format(pos2coors(pos1), pos2coors(pos2))
+            result = figure, '{}-{}'.format(pos2coors(*pos1), pos2coors(*pos2))
         else:
             result = figure, rooked
         self.current_player = invertColor(self.current_player)

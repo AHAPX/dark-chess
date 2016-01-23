@@ -4,8 +4,9 @@ from flask import Flask, request, make_response
 from validate_email import validate_email
 
 import config
+import errors
 from serializers import send_data, send_message, send_error
-from decorators import authenticated
+from decorators import authenticated, with_game
 from models import User
 from cache import delete_cache, add_to_queue
 from helpers import generate_token
@@ -59,8 +60,20 @@ def logout():
     return response
 
 
-@app.route('/new_game')
+@app.route('/game/new')
 def new_game():
     token = generate_token()
     add_to_queue(token)
     return send_data({'game': token})
+
+
+@app.route('/game/info/<token>')
+@with_game
+def game_info(game):
+    return game.get_board()
+
+
+@app.route('/game/move/<token>/<move>')
+@with_game
+def game_move(game, move):
+    return game.move(*move.split('-'))

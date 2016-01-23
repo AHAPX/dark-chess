@@ -3,6 +3,7 @@ import datetime
 import peewee
 
 import config
+import consts
 from helpers import encrypt_password, generate_token
 from cache import set_cache
 
@@ -43,13 +44,15 @@ class Game(BaseModel):
     date_end = peewee.DateTimeField(null=True)
     state = peewee.CharField(null=True)
     date_state = peewee.DateTimeField(default=datetime.datetime.now)
+    next_color = peewee.IntegerField(default=consts.WHITE)
 
-    def add_move(self, figure, start, end):
+    def add_move(self, figure, move):
         num = self.moves.select().count() + 1
-        Move.create(game=self, number=num, figure=figure, start=start, end=end)
+        Move.create(game=self, number=num, figure=figure, move=move)
 
-    def save_state(self, state):
+    def save_state(self, state, next_color):
         self.state = state
+        self.next_color = next_color
         self.date_state = datetime.datetime.now()
         self.save()
 
