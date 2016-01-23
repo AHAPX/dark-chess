@@ -9,7 +9,7 @@ from serializers import send_data, send_message, send_error
 from decorators import authenticated, with_game
 from models import User
 from cache import delete_cache, add_to_queue
-from helpers import generate_token
+from helpers import generateToken
 
 
 app = Flask(__name__)
@@ -62,7 +62,7 @@ def logout():
 
 @app.route('/game/new')
 def new_game():
-    token = generate_token()
+    token = generateToken()
     add_to_queue(token)
     return send_data({'game': token})
 

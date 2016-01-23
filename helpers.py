@@ -20,7 +20,7 @@ def pos2coors(x, y):
 
 
 def coors2pos(coors):
-    if len(coors) > 2:
+    if len(coors) != 2:
         raise ValueError
     x, y = coors[0].lower(), int(coors[1])
     return ('abcdefgh'.index(x) + 1, y)
@@ -32,9 +32,9 @@ def invertColor(color):
     return WHITE
 
 
-def encrypt_password(password):
+def encryptPassword(password):
     return md5(md5(password).hexdigest() + config.PASSWORD_SALT).hexdigest()
 
 
-def generate_token():
+def generateToken():
     return str(uuid.uuid4())

@@ -4,7 +4,7 @@ import peewee
 
 import config
 import consts
-from helpers import encrypt_password, generate_token
+from helpers import encryptPassword, generateToken
 from cache import set_cache
 
 
@@ -19,21 +19,29 @@ class User(BaseModel):
     password = peewee.CharField()
     email = peewee.CharField(null=True)
     date_created = peewee.DateTimeField(default=datetime.datetime.now)
-    verified = peewee.BooleanField(default=False)
+    date_verified = peewee.DateTimeField(null=True)
 
     @classmethod
     def add(cls, username, password, email=None):
-        return cls.create(username=username, password=encrypt_password(password), email=email)
+        return cls.create(username=username, password=encryptPassword(password), email=email)
 
     @classmethod
     def authenticate(cls, username, password):
         try:
-            user = cls.get(username=username, password=encrypt_password(password))
+            user = cls.get(username=username, password=encryptPassword(password))
         except cls.DoesNotExist:
             return False
-        token = generate_token()
+        token = generateToken()
         set_cache(token, user.pk, config.SESSION_TIME)
         return token
+
+    def verify(self):
+        self.date_verified = datetime.datetime.now()
+        self.save()
+
+    @property
+    def verified(self):
+        return bool(self.date_verified)
 
 
 class Game(BaseModel):

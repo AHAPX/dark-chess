@@ -1,6 +1,6 @@
 from playhouse.sqlite_ext import SqliteExtDatabase
 
-DB = SqliteExtDatabase('dark_chess.db')
+DB = SqliteExtDatabase('/tmp/dark_chess.db')
 
 DEBUG = False
 
