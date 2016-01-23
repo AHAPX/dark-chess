@@ -1,4 +1,4 @@
-from helpers import onBoard, invertColor
+from helpers import onBoard, invertColor, pos2coors, coors2pos
 from errors import (
     OutOfBoardError, CellIsBusyError, WhiteWon, BlackWon, Draw,
     WrongMoveError, NotFoundError
@@ -11,8 +11,11 @@ class Board(object):
     _figure_list = []
     _moves = []
 
-    def __init__(self):
-        self.standFigures()
+    def __init__(self, figures=None):
+        if figures is not None:
+            self.loadFigures(figures)
+        else:
+            self.standFigures()
         self.updateFigures()
 
     def standFigures(self):
@@ -42,6 +45,24 @@ class Board(object):
                         self._figure_list.append(fig)
                 else:
                     self._figure_list.append(figs)
+
+    def loadFigures(self, line):
+        figures = {
+            WHITE: {PAWN: [], ROOK: [], KNIGHT: [], BISHOP: [], QUEEN: [], KING: None},
+            BLACK: {PAWN: [], ROOK: [], KNIGHT: [], BISHOP: [], QUEEN: [], KING: None}
+        }
+        figure_list = []
+        for fig in line.split(','):
+            cls, color = FIGURES_MAP[fig[0]]
+            x, y = coors2pos(fig[1:3])
+            figure = cls(x, y, color, self)
+            if cls == King:
+                figures[color][cls.kind] = figure
+            else:
+                figures[color][cls.kind].append(figure)
+            figure_list.append(figure)
+        self._figures = figures
+        self._figure_list = figure_list
 
     def cell2Figure(self, x, y):
         if not onBoard(x, y):
@@ -87,21 +108,7 @@ class Board(object):
         self.updateFigures()
 
     def __str__(self):
-        coors = {}
-        for fig in self.figures:
-            coors['{}{}'.format(fig.x, fig.y)] = fig
-        result = []
-        for y in range(8, 0, -1):
-            line = ''
-            for x in range(1, 9):
-                coor = '{}{}'.format(x, y)
-                fig = coors.get(coor)
-                if fig:
-                    line += str(fig)
-                else:
-                    line += '#' if (x + y) % 2 else ' '
-            result.append(line)
-        return '\n'.join(result)
+        return ','.join(map(str, self.figures))
 
     def updateFigures(self):
         for fig in self.figures:
@@ -141,7 +148,7 @@ class Figure(object):
     color = UNKNOWN
     kind = UNKNOWN
     x, y = 0, 0
-    symbol = '?'
+    _symbol = '?'
     _moves = None
     _moved = False
 
@@ -151,10 +158,14 @@ class Figure(object):
         self.color = color
         self.board = board
 
-    def __str__(self):
+    @property
+    def symbol(self):
         if self.color == WHITE:
-            return self.symbol.upper()
-        return self.symbol.lower()
+            return self._symbol.upper()
+        return self._symbol.lower()
+
+    def __str__(self):
+        return '{}{}'.format(self.symbol, pos2coors(self.x, self.y))
 
     def getMoves(self):
         if self._moves is None:
@@ -209,7 +220,7 @@ class Figure(object):
 
 
 class Pawn(Figure):
-    symbol = ''
+    _symbol = ''
     kind = PAWN
 
     def __str__(self):
@@ -242,7 +253,7 @@ class Pawn(Figure):
 
 
 class Bishop(Figure):
-    symbol = 'B'
+    _symbol = 'B'
     kind = BISHOP
 
     def updateMoves(self):
@@ -250,7 +261,7 @@ class Bishop(Figure):
 
 
 class Knight(Figure):
-    symbol = 'N'
+    _symbol = 'N'
     kind = KNIGHT
 
     def updateMoves(self):
@@ -268,7 +279,7 @@ class Knight(Figure):
 
 
 class Rook(Figure):
-    symbol = 'R'
+    _symbol = 'R'
     kind = ROOK
 
     def updateMoves(self):
@@ -276,7 +287,7 @@ class Rook(Figure):
 
 
 class Queen(Figure):
-    symbol = 'Q'
+    _symbol = 'Q'
     kind = QUEEN
 
     def updateMoves(self):
@@ -284,7 +295,7 @@ class Queen(Figure):
 
 
 class King(Figure):
-    symbol = 'K'
+    _symbol = 'K'
     _aura = []
     kind = KING
 
@@ -364,14 +375,14 @@ class King(Figure):
             except WrongMoveError:
                 pass
             else:
-                return True
+                return '0-0' if x == 7 else '0-0-0'
         return False
 
 
 class Game(object):
 
-    def __init__(self):
-        self.board = Board()
+    def __init__(self, figures=None):
+        self.board = Board(figures)
         self.current_player = WHITE
 
     def move(self, color, pos1, pos2):
@@ -382,10 +393,38 @@ class Game(object):
             raise NotFoundError
         if figure.color != color:
             raise WrongFigureError
-        if not (isinstance(figure, King) and figure.try_to_castle(*pos2)):
+        rooked = isinstance(figure, King) and figure.try_to_castle(*pos2)
+        if not rooked
             figure.move(*pos2)
+            result = figure, '{}-{}'.format(pos2coors(pos1), pos2coors(pos2))
+        else:
+            result = figure, rooked
         self.current_player = invertColor(self.current_player)
+        return result
 
     @property
     def moves(self):
         return self.board.moves
+
+
+FIGURES_MAP = {
+    'p': (Pawn, BLACK),
+    'r': (Rook, BLACK),
+    'n': (Knight, BLACK),
+    'b': (Bishop, BLACK),
+    'q': (Queen, BLACK),
+    'k': (King, BLACK),
+    'P': (Pawn, WHITE),
+    'R': (Rook, WHITE),
+    'N': (Knight, WHITE),
+    'B': (Bishop, WHITE),
+    'Q': (Queen, WHITE),
+    'K': (King, WHITE),
+}
+
+
+if __name__ == '__main__':
+    b = Board('Ke1,ke8,Ra1,qd8')
+    print b
+    print b.getFigure(WHITE, KING)
+    print b.getFigure(BLACK, KING)

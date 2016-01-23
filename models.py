@@ -39,12 +39,19 @@ class Game(BaseModel):
     pk = peewee.PrimaryKeyField()
     player_white = peewee.ForeignKeyField(User, related_name='games_white', null=True)
     player_black = peewee.ForeignKeyField(User, related_name='games_black', null=True)
-    date_start = peewee.DateTimeField(default=datetime.datetime.now)
+    date_created = peewee.DateTimeField(default=datetime.datetime.now)
     date_end = peewee.DateTimeField(null=True)
+    state = peewee.CharField(null=True)
+    date_state = peewee.DateTimeField(default=datetime.datetime.now)
 
     def add_move(self, figure, start, end):
         num = self.moves.select().count() + 1
         Move.create(game=self, number=num, figure=figure, start=start, end=end)
+
+    def save_state(self, state):
+        self.state = state
+        self.date_state = datetime.datetime.now()
+        self.save()
 
 
 class Move(BaseModel):
@@ -52,8 +59,8 @@ class Move(BaseModel):
     game = peewee.ForeignKeyField(Game, related_name='moves')
     number = peewee.IntegerField()
     figure = peewee.FixedCharField(max_length=1)
-    start = peewee.FixedCharField(max_length=2)
-    end = peewee.FixedCharField(max_length=2)
+    move = peewee.CharField(max_length=5)
+    date_created = peewee.DateTimeField(default=datetime.datetime.now)
 
 
 if __name__ == '__main__':

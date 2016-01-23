@@ -17,3 +17,5 @@ class WhiteWon(EndGame): pass
 class BlackWon(EndGame): pass
 
 class Draw(EndGame): pass
+
+class GameNotFoundError(Exception): pass

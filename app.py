@@ -59,8 +59,8 @@ def logout():
     return response
 
 
-@app.route('/start')
-def start():
+@app.route('/new_game')
+def new_game():
     token = generate_token()
     add_to_queue(token)
     return send_data({'game': token})

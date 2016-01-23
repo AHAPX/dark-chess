@@ -22,7 +22,6 @@ class BaseSerializer(object):
         try:
             return jsonify(self.calc())
         except Exception as exc:
-            raise
             logger.error(exc)
             return jsonify({'error': 'system error'})
 
