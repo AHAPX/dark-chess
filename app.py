@@ -76,4 +76,7 @@ def game_info(game):
 @app.route('/game/move/<token>/<move>')
 @with_game
 def game_move(game, move):
-    return game.move(*move.split('-'))
+    moves = move.split('-')
+    if len(moves) == 2:
+        return game.move(*moves)
+    return send_error('move format must be like e2-e4')

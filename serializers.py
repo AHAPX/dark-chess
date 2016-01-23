@@ -20,10 +20,13 @@ class BaseSerializer(object):
 
     def to_json(self):
         try:
-            return jsonify(self.calc())
+            data = self.calc()
+            if 'rc' not in data:
+                data['rc'] = True
+            return jsonify(data)
         except Exception as exc:
             logger.error(exc)
-            return jsonify({'error': 'system error'})
+            return jsonify({'rc': False, 'error': 'system error'})
 
 
 class FigureSerializer(BaseSerializer):
@@ -65,8 +68,14 @@ class GameSerializer(BaseSerializer):
 def send_data(data):
     return BaseSerializer(data).to_json()
 
+
 def send_message(message):
     return send_data({'message': message})
 
+
 def send_error(error):
-    return send_data({'error': error})
+    return send_data({'rc': False, 'error': error})
+
+
+def send_success():
+    return send_data({'rc': True})

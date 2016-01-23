@@ -36,7 +36,7 @@ def with_game(f):
     def decorated(token, *args, **kwargs):
         try:
             game = Game.load_game(token)
-        except errors.GameNotFoundError:
-            return send_error('game not found')
+        except errors.GameNotFoundError as exc:
+            return send_error(exc.message)
         return f(game, *args, **kwargs)
     return decorated

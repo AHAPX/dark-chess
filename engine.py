@@ -1,6 +1,6 @@
 from helpers import onBoard, invertColor, pos2coors, coors2pos
 from errors import (
-    OutOfBoardError, CellIsBusyError, WhiteWon, BlackWon, Draw,
+    OutOfBoardError, CellIsBusyError, EndGame, WhiteWon, BlackWon, Draw,
     WrongMoveError, NotFoundError, WrongTurnError, WrongFigureError
 )
 from consts import *
@@ -106,6 +106,12 @@ class Board(object):
         })
         figure.x, figure.y = x, y
         self.updateFigures()
+        for fig in self.figures:
+            if fig.color == figure.color:
+                continue
+            if len(fig.getMoves()):
+                return
+        raise Draw
 
     def __str__(self):
         return ','.join(map(str, self.figures))
@@ -367,10 +373,14 @@ class King(Figure):
            (self.color == BLACK and (x, y) in ((7, 8), (3, 8))):
             try:
                 self.castle(x == 7)
+                move = '0-0' if x == 7 else '0-0-0'
             except WrongMoveError:
                 pass
+            except EndGame as exc:
+                exc.move = move
+                raise exc
             else:
-                return '0-0' if x == 7 else '0-0-0'
+                return move
         return False
 
 
@@ -388,12 +398,20 @@ class Game(object):
             raise NotFoundError
         if figure.color != color:
             raise WrongFigureError
-        rooked = isinstance(figure, King) and figure.try_to_castle(*pos2)
-        if not rooked:
-            figure.move(*pos2)
+        try:
+            castled = isinstance(figure, King) and figure.try_to_castle(*pos2)
+        except EndGame as exc:
+            exc.figure = figure
+            raise exc
+        if not castled:
             result = figure, '{}-{}'.format(pos2coors(*pos1), pos2coors(*pos2))
+            try:
+                figure.move(*pos2)
+            except EndGame as exc:
+                exc.figure, exc.move = result
+                raise exc
         else:
-            result = figure, rooked
+            result = figure, castled
         self.current_player = invertColor(self.current_player)
         return result
 
@@ -416,10 +434,3 @@ FIGURES_MAP = {
     'Q': (Queen, WHITE),
     'K': (King, WHITE),
 }
-
-
-if __name__ == '__main__':
-    b = Board('Ke1,ke8,Ra1,qd8')
-    print b
-    print b.getFigure(WHITE, KING)
-    print b.getFigure(BLACK, KING)

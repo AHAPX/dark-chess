@@ -22,7 +22,7 @@ def pos2coors(x, y):
 def coors2pos(coors):
     if len(coors) > 2:
         raise ValueError
-    x, y = coors[0], int(coors[1])
+    x, y = coors[0].lower(), int(coors[1])
     return ('abcdefgh'.index(x) + 1, y)
 
 
