@@ -196,6 +196,8 @@ class Figure(object):
     def getLineMoves(self, deltaList):
         moves = []
         for dx, dy in deltaList:
+            if dx == 0 and dy == 0:
+                continue
             x, y = self.x, self.y
             while True:
                 x += dx
@@ -230,7 +232,7 @@ class Pawn(Figure):
     kind = PAWN
 
     def updateMoves(self):
-        moves = []
+        result, moves = [], []
         if self.color == WHITE:
             if self.y == 2:
                 moves += [(self.x, 3), (self.x, 4)]
@@ -243,14 +245,22 @@ class Pawn(Figure):
             elif self.y > 1:
                 moves.append((self.x, self.y - 1))
             cutMoves = (self.x - 1, self.y - 1), (self.x + 1, self.y - 1)
+        for x, y in moves:
+            try:
+                fig = self.board.cell2Figure(x, y)
+            except OutOfBoardError:
+                break
+            if fig:
+                break
+            result.append((x, y))
         for x, y in cutMoves:
             try:
                 fig = self.board.cell2Figure(x, y)
             except OutOfBoardError:
                 continue
             if fig and self.isEnemy(fig):
-                moves.append((x, y))
-        self._moves = moves
+                result.append((x, y))
+        self._moves = result
 
 
 class Bishop(Figure):
