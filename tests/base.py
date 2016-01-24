@@ -20,3 +20,14 @@ class TestCaseDB(unittest.TestCase):
         ]
         with test_database(test_db, model_classes):
             super(TestCaseDB, self).run(result)
+
+
+class TestCaseBase(unittest.TestCase):
+
+    def compare_dicts(self, data, expect):
+        for k1, v1 in expect.items():
+            self.assertIn(k1, data)
+        for k2, v2 in v1.items():
+            self.assertEqual(data[k1][k2], v2)
+        for key in data.keys():
+            self.assertIn(key, expect)

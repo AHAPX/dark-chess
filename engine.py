@@ -230,6 +230,9 @@ class Figure(object):
     def terminate(self):
         self.board._figures[self.color][self.kind].remove(self)
 
+    def getVisibleCells(self):
+        return self.getMoves()
+
 
 class Pawn(Figure):
     _symbol = 'P'
@@ -265,6 +268,26 @@ class Pawn(Figure):
             if fig and self.isEnemy(fig):
                 result.append((x, y))
         self._moves = result
+
+    def getVisibleCells(self):
+        cells = []
+        if self.color == WHITE:
+            if self.y == 2:
+                cells.append((self.x, 3))
+                if not self.board.cell2Figure(self.x, 3):
+                    cells.append((self.x, 4))
+            elif self.y < 8:
+                cells.append((self.x, self.y + 1))
+            cells += [(self.x - 1, self.y + 1), (self.x + 1, self.y + 1)]
+        else:
+            if self.y == 7:
+                cells.append((self.x, 6))
+                if not self.board.cell2Figure(self.x, 6):
+                    cells.append((self.x, 5))
+            elif self.y > 1:
+                cells.append((self.x, self.y - 1))
+            cells += [(self.x - 1, self.y - 1), (self.x + 1, self.y - 1)]
+        return cells
 
 
 class Bishop(Figure):
@@ -399,6 +422,9 @@ class King(Figure):
 
     def remove(self, *args, **kwargs):
         del self
+
+    def getVisibleCells(self):
+        return self.royalAura()
 
 
 class Game(object):

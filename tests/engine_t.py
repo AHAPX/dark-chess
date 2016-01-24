@@ -60,6 +60,11 @@ class TestFiguresMoves(unittest.TestCase):
             figure = Board(board).getFigure(color, kind)
             self.assertEqual(sorted(figure.getMoves()), sorted(map(coors2pos, results)))
 
+    def check_cases_visible(self, color, kind, cases):
+        for (board, results) in cases:
+            figure = Board(board).getFigure(color, kind)
+            self.assertEqual(sorted(figure.getVisibleCells()), sorted(map(coors2pos, results)))
+
     def test_Pawn(self):
         self.assertEqual(str(Pawn(1, 1, WHITE, None)), 'Pa1')
         self.assertEqual(str(Pawn(1, 1, BLACK, None)), 'pa1')
@@ -72,7 +77,12 @@ class TestFiguresMoves(unittest.TestCase):
             ('Pe4,pf5', ['e5', 'f5']),
             ('Pe4,pd5,pe5,pf5', ['d5', 'f5']),
         ]
+        cases_vis = [
+            ('Pe2', ['e3', 'e4', 'd3', 'f3']),
+            ('Pe2,qe3', ['e3', 'd3', 'f3']),
+        ]
         self.check_cases(WHITE, PAWN, cases)
+        self.check_cases_visible(WHITE, PAWN, cases_vis)
 
     def test_Bishop(self):
         self.assertEqual(str(Bishop(1, 1, WHITE, None)), 'Ba1')
@@ -82,6 +92,7 @@ class TestFiguresMoves(unittest.TestCase):
             ('Bd4,pb6,pe5,Ra1', ['e5', 'c3', 'b2', 'e3', 'f2', 'g1', 'c5', 'b6']),
         ]
         self.check_cases(WHITE, BISHOP, cases)
+        self.check_cases_visible(WHITE, BISHOP, cases)
 
     def test_Knight(self):
         self.assertEqual(str(Knight(1, 1, WHITE, None)), 'Na1')
@@ -91,6 +102,7 @@ class TestFiguresMoves(unittest.TestCase):
             ('Ng4,Pe3,Rg2,pf6,rh6', ['f6', 'h6', 'h2', 'f2', 'e5']),
         ]
         self.check_cases(WHITE, KNIGHT, cases)
+        self.check_cases_visible(WHITE, KNIGHT, cases)
 
     def test_Rook(self):
         self.assertEqual(str(Rook(1, 1, WHITE, None)), 'Ra1')
@@ -100,6 +112,7 @@ class TestFiguresMoves(unittest.TestCase):
             ('Re4,Bc4,Ke1,pe6,bf4', ['e3', 'e2', 'e5', 'e6', 'd4', 'f4']),
         ]
         self.check_cases(WHITE, ROOK, cases)
+        self.check_cases_visible(WHITE, ROOK, cases)
 
     def test_Queen(self):
         self.assertEqual(str(Queen(1, 1, WHITE, None)), 'Qa1')
@@ -119,6 +132,7 @@ class TestFiguresMoves(unittest.TestCase):
             ),
         ]
         self.check_cases(WHITE, QUEEN, cases)
+        self.check_cases_visible(WHITE, QUEEN, cases)
 
     def test_King(self):
         self.assertEqual(str(King(1, 1, WHITE, None)), 'Ka1')
@@ -127,7 +141,12 @@ class TestFiguresMoves(unittest.TestCase):
             ('Ke4', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']),
             ('Ke4,Pd3,Rg2,nd5,re6', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd4']),
         ]
+        cases_vis = [
+            ('Ke4', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']),
+            ('Ke4,Pd3,Rg2,nd5,re6', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']),
+        ]
         self.check_cases(WHITE, KING, cases)
+        self.check_cases_visible(WHITE, KING, cases_vis)
 
 
 class TestKing(unittest.TestCase):
