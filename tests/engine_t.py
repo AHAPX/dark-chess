@@ -53,7 +53,7 @@ class TestFigure(unittest.TestCase):
         self.assertEqual(len(board._figures[WHITE][PAWN]), 7)
 
 
-class TestFigures(unittest.TestCase):
+class TestFiguresMoves(unittest.TestCase):
 
     def check_cases(self, color, kind, cases):
         for (board, results) in cases:
@@ -120,9 +120,158 @@ class TestFigures(unittest.TestCase):
         ]
         self.check_cases(WHITE, QUEEN, cases)
 
+    def test_King(self):
+        self.assertEqual(str(King(1, 1, WHITE, None)), 'Ka1')
+        self.assertEqual(str(King(1, 1, BLACK, None)), 'ka1')
+        cases = [
+            ('Ke4', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']),
+            ('Ke4,Pd3,Rg2,nd5,re6', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd4']),
+        ]
+        self.check_cases(WHITE, KING, cases)
 
 
+class TestKing(unittest.TestCase):
+
+    def test_aura(self):
+        results = ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']
+        king = Board('Ke4,Pd3,Rf3,nd5,re6').getFigure(WHITE, KING)
+        self.assertEqual(sorted(king.royalAura()), sorted(map(coors2pos, results)))
+
+    def test_can_castle_white(self):
+        # after move
+        king = Board('Kd1,Rh1,ke8').getFigure(WHITE, KING)
+        king.move(5, 1)
+        self.assertFalse(king.can_castle())
+        king = Board('Ke1,Rh2,ke8').getFigure(WHITE, KING)
+        king.board.getFigure(WHITE, ROOK).move(8, 1)
+        self.assertFalse(king.can_castle())
+        # short castle
+        king = Board('Ke1,Rh1,ke8').getFigure(WHITE, KING)
+        self.assertIsInstance(king.can_castle(), Rook)
+        self.assertFalse(king.can_castle(False))
+        # short castle with barrier
+        king = Board('Ke1,Rh1,Bf1,ke8').getFigure(WHITE, KING)
+        self.assertFalse(king.can_castle())
+        # long castle
+        king = Board('Ke1,Ra1,ke8').getFigure(WHITE, KING)
+        self.assertIsInstance(king.can_castle(False), Rook)
+        self.assertFalse(king.can_castle())
+        # long castle with barrier
+        king = Board('Ke1,Ra1,Bc1,ke8').getFigure(WHITE, KING)
+        self.assertFalse(king.can_castle(False))
+
+    def test_can_castle_black(self):
+        # after move
+        king = Board('Ke1,rh8,kd8').getFigure(BLACK, KING)
+        king.move(5, 8)
+        self.assertFalse(king.can_castle())
+        king = Board('Ke1,rh7,ke8').getFigure(BLACK, KING)
+        king.board.getFigure(BLACK, ROOK).move(8, 8)
+        self.assertFalse(king.can_castle())
+        # short castle
+        king = Board('Ke1,rh8,ke8').getFigure(BLACK, KING)
+        self.assertIsInstance(king.can_castle(), Rook)
+        self.assertFalse(king.can_castle(False))
+        # short castle with barrier
+        king = Board('Ke1,rh8,bf8,ke8').getFigure(BLACK, KING)
+        self.assertFalse(king.can_castle())
+        # long castle
+        king = Board('Ke1,ra8,ke8').getFigure(BLACK, KING)
+        self.assertIsInstance(king.can_castle(False), Rook)
+        self.assertFalse(king.can_castle())
+        # long castle with barrier
+        king = Board('Ke1,ra8,bc8,ke8').getFigure(BLACK, KING)
+        self.assertFalse(king.can_castle(False))
+
+    def test_castle_1(self):
+        board = Board('Ke1,Rh1,ke8')
+        king = board.getFigure(WHITE, KING)
+        rook = board.getFigure(WHITE, ROOK)
+        self.assertEqual(str(king), 'Ke1')
+        self.assertEqual(str(rook), 'Rh1')
+        king.castle()
+        self.assertEqual(str(king), 'Kg1')
+        self.assertEqual(str(rook), 'Rf1')
+
+    def test_castle_2(self):
+        board = Board('Ke1,Rh1,Ng1,ke8')
+        king = board.getFigure(WHITE, KING)
+        rook = board.getFigure(WHITE, ROOK)
+        self.assertEqual(str(king), 'Ke1')
+        self.assertEqual(str(rook), 'Rh1')
+        with self.assertRaises(errors.WrongMoveError):
+            king.castle()
+        self.assertEqual(str(king), 'Ke1')
+        self.assertEqual(str(rook), 'Rh1')
+
+    def test_try_to_castle_white(self):
+        # short castle
+        king = Board('Ke1,Rh1,ke8').getFigure(WHITE, KING)
+        self.assertFalse(king.try_to_castle(6, 1))
+        self.assertFalse(king.try_to_castle(8, 1))
+        self.assertEqual(king.try_to_castle(7, 1), '0-0')
+        # long castle
+        king = Board('Ke1,Ra1,ke8').getFigure(WHITE, KING)
+        self.assertFalse(king.try_to_castle(1, 1))
+        self.assertFalse(king.try_to_castle(2, 1))
+        self.assertFalse(king.try_to_castle(4, 1))
+        self.assertEqual(king.try_to_castle(3, 1), '0-0-0')
+
+    def test_try_to_castle_black(self):
+        # short castle
+        king = Board('Ke1,rh8,ke8').getFigure(BLACK, KING)
+        self.assertFalse(king.try_to_castle(6, 8))
+        self.assertFalse(king.try_to_castle(8, 8))
+        self.assertEqual(king.try_to_castle(7, 8), '0-0')
+        # long castle
+        king = Board('Ke1,ra8,ke8').getFigure(BLACK, KING)
+        self.assertFalse(king.try_to_castle(1, 8))
+        self.assertFalse(king.try_to_castle(2, 8))
+        self.assertFalse(king.try_to_castle(4, 8))
+        self.assertEqual(king.try_to_castle(3, 8), '0-0-0')
 
 
+class TestGame(unittest.TestCase):
 
+    def test_move(self):
+        game = Game('Kf3,Pe2,ke8,qf7')
+        self.assertEqual(game.current_player, WHITE)
+        with self.assertRaises(errors.WrongTurnError):
+            game.move(BLACK, (5, 4), (5, 5))
+        with self.assertRaises(errors.NotFoundError):
+            game.move(WHITE, (5, 4), (5, 5))
+        with self.assertRaises(errors.WrongFigureError):
+            game.move(WHITE, (5, 8), (5, 7))
+        with self.assertRaises(errors.WrongMoveError):
+            game.move(WHITE, (5, 2), (5, 5))
+        fig, move = game.move(WHITE, (5, 2), (5, 4))
+        self.assertIsInstance(fig, Pawn)
+        self.assertEqual(move, 'e2-e4')
+        self.assertEqual(game.current_player, BLACK)
+        with self.assertRaises(errors.BlackWon) as cm:
+            game.move(BLACK, (6, 7), (6, 3))
+        self.assertIsInstance(cm.exception.figure, Queen)
+        self.assertEqual(cm.exception.move, 'f7-f3')
+        game = Game('Ke1,Rh1,ke8')
+        fig, move = game.move(WHITE, (5, 1), (7, 1))
+        self.assertIsInstance(fig, King)
+        self.assertEqual(move, '0-0')
+        self.assertEqual(game.current_player, BLACK)
 
+    def test_full_game(self):
+        moves = [
+            'e2-e4', 'e7-e5', 'g1-f3', 'b8-c6', 'f1-c4', 'c6-d4', 'f3-e5',
+            'd8-g5', 'e5-f7', 'g5-g2', 'h1-f1', 'g2-e4', 'c4-e2', 'd4-f3',
+            'e2-f3', 'e4-e1'
+        ]
+        game = Game()
+        with self.assertRaises(errors.BlackWon):
+            for move in moves:
+                positions = map(coors2pos, move.split('-'))
+                game.move(game.current_player, *positions)
+        expect = [
+            'Pa2', 'Pb2', 'Pc2', 'Pd2', 'Pf2', 'Ph2', 'Ra1', 'Rf1', 'Nb1', 'Nf7',
+            'Bc1', 'Bf3', 'Qd1', 'pa7', 'pb7', 'pc7', 'pd7', 'pg7', 'ph7', 'ra8',
+            'rh8', 'ng8', 'bc8', 'bf8', 'qe1', 'ke8'
+        ]
+        self.assertEqual(str(game.board), ','.join(expect))

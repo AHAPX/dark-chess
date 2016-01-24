@@ -86,6 +86,7 @@ class Board(object):
         return False
 
     def move(self, figure, x, y):
+        end_game = None
         fig = self.cell2Figure(x, y)
         if fig:
             if fig.color == figure.color:
@@ -93,8 +94,9 @@ class Board(object):
             else:
                 if isinstance(fig, King):
                     if fig.color == WHITE:
-                        raise BlackWon
-                    raise WhiteWon
+                        end_game = BlackWon
+                    else:
+                        end_game = WhiteWon
                 self._figure_list.remove(fig)
                 fig.terminate()
         self._moves.append({
@@ -106,6 +108,8 @@ class Board(object):
         })
         figure.x, figure.y = x, y
         self.updateFigures()
+        if end_game:
+            raise end_game
         for fig in self.figures:
             if fig.color == figure.color:
                 continue
@@ -353,16 +357,16 @@ class King(Figure):
         else:
             y = 8
         if short:
-            rook_index = 1
+            rook_x = 8
             cells = ((6, y), (7, y))
         else:
-            rook_index = 0
+            rook_x = 1
             cells = ((2, y), (3, y), (4, y))
         try:
-            rook = self.board.getFigure(self.color, ROOK, rook_index)
-            if rook.moved:
+            rook = self.board.cell2Figure(x=rook_x, y=y)
+            if not rook or rook.moved:
                 return False
-        except NotFoundError:
+        except NotFoundError, OutOfBoardError:
             return False
         for cell in cells:
             try:
@@ -392,6 +396,9 @@ class King(Figure):
             else:
                 return move
         return False
+
+    def remove(self, *args, **kwargs):
+        del self
 
 
 class Game(object):
