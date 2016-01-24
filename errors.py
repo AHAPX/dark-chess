@@ -2,6 +2,12 @@ class BaseException(Exception):
     message = 'dark chess base exception'
 
 
+class BaseArgException(BaseException):
+    def __init__(self, *args, **kwargs):
+        self.message = self.message.format(*args, **kwargs)
+        super(BaseArgException, self).__init__(*args, **kwargs)
+
+
 class OutOfBoardError(BaseException):
     message = 'coordinates are out of board'
 
@@ -44,3 +50,18 @@ class Draw(EndGame):
 
 class GameNotFoundError(BaseException):
     message = 'game not found'
+
+
+class TooOftenRequestError(BaseArgException):
+    message = 'too often requests, try again after {} seconds'
+
+    def __init__(self, seconds):
+        super(TooOftenRequestError, self).__init__(seconds)
+
+
+class VerifiedError(BaseException):
+    message = 'your email is already verified'
+
+
+class VerificationRequestError(TooOftenRequestError):
+    message = 'you must wait {} seconds to get new verification code'

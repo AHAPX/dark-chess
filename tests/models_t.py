@@ -1,5 +1,8 @@
 import time
+from datetime import datetime, timedelta
 
+import config
+import errors
 from tests.base import TestCaseDB
 from consts import WHITE, BLACK
 from models import User, Game, Move
@@ -38,3 +41,23 @@ class TestModels(TestCaseDB):
         self.assertEqual(game.next_color, BLACK)
         self.assertEqual(game.state, 'Ke2,k28')
         self.assertTrue((game.date_state - game.date_created).total_seconds() > 1)
+
+    def test_verification(self):
+        user = User.add('user1', 'passwd')
+        self.assertFalse(user.verified)
+        self.assertFalse(User.verify_email('qwerty'))
+        with self.assertRaises(AttributeError):
+            user.get_verification()
+        user.email = 'user1@fakemail.net'
+        user.save()
+        token = user.get_verification()
+        with self.assertRaises(errors.VerificationRequestError):
+            user.get_verification()
+        user.date_verification_token = datetime.now() - timedelta(seconds=config.VERIFICATION_PERIOD+10)
+        user.save()
+        token = user.get_verification()
+        self.assertEqual(User.verify_email(token).pk, user.pk)
+        user = User.get(pk=user.pk)
+        self.assertTrue(user.verified)
+        with self.assertRaises(errors.VerifiedError):
+            user.get_verification()

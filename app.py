@@ -5,7 +5,7 @@ from validate_email import validate_email
 
 import config
 import errors
-from serializers import send_data, send_message, send_error
+from serializers import send_data, send_message, send_error, send_success
 from decorators import authenticated, with_game
 from models import User
 from cache import delete_cache, add_to_queue
@@ -20,7 +20,7 @@ def index():
     return send_message('welcome to dark chess')
 
 
-@app.route('/register', methods=['POST'])
+@app.route('/auth/register', methods=['POST'])
 def register():
     username = request.json.get('username')
     password = request.json.get('password')
@@ -38,7 +38,25 @@ def register():
     return send_message('registration successful')
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/auth/verification/')
+@authenticated
+def get_verification():
+    try:
+        token = request.user.get_verification()
+    except Exception as exc:
+        return send_error(exc.message)
+    # TODO: send email with token
+    return send_success()
+
+
+@app.route('/auth/verification/<token>')
+def verify(token):
+    if User.verify_email(token):
+        return send_success()
+    return send_error('token not found')
+
+
+@app.route('/auth/login', methods=['POST'])
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
@@ -51,7 +69,7 @@ def login():
     return send_error('username or password is incorrect')
 
 
-@app.route('/logout')
+@app.route('/auth/logout')
 @authenticated
 def logout():
     delete_cache(request.auth)
