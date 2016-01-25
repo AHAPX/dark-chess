@@ -26,18 +26,18 @@ def coors2pos(coors):
     return ('abcdefgh'.index(x) + 1, y)
 
 
-def invertColor(color):
+def invert_color(color):
     if color == WHITE:
         return BLACK
     return WHITE
 
 
-def encryptPassword(password):
+def encrypt_password(password):
     pass_md5 = md5(password.encode()).hexdigest()
     return md5((pass_md5 + config.PASSWORD_SALT).encode()).hexdigest()
 
 
-def generateToken():
+def generate_token():
     return str(uuid.uuid4())
 
 

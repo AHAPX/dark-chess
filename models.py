@@ -5,7 +5,7 @@ import peewee
 import config
 import consts
 import errors
-from helpers import encryptPassword, generateToken
+from helpers import encrypt_password, generate_token
 from cache import set_cache, get_cache, delete_cache
 
 
@@ -25,15 +25,15 @@ class User(BaseModel):
 
     @classmethod
     def add(cls, username, password, email=None):
-        return cls.create(username=username, password=encryptPassword(password), email=email)
+        return cls.create(username=username, password=encrypt_password(password), email=email)
 
     @classmethod
     def authenticate(cls, username, password):
         try:
-            user = cls.get(username=username, password=encryptPassword(password))
+            user = cls.get(username=username, password=encrypt_password(password))
         except cls.DoesNotExist:
             return False
-        token = generateToken()
+        token = generate_token()
         set_cache(token, user.pk, config.SESSION_TIME)
         return token
 
@@ -56,7 +56,7 @@ class User(BaseModel):
             seconds = (datetime.now() - self.date_verification_token).total_seconds()
             if seconds < config.VERIFICATION_PERIOD:
                 raise errors.VerificationRequestError(config.VERIFICATION_PERIOD - int(seconds))
-        token = generateToken()
+        token = generate_token()
         set_cache(token, self.pk, config.VERIFICATION_TIME)
         self.date_verification_token = datetime.now()
         self.save()
@@ -83,7 +83,7 @@ class Game(BaseModel):
 
     def add_move(self, figure, move):
         num = self.moves.select().count() + 1
-        Move.create(game=self, number=num, figure=figure, move=move)
+        return Move.create(game=self, number=num, figure=figure, move=move)
 
     def save_state(self, state, next_color):
         self.state = state

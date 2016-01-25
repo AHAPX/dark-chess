@@ -8,9 +8,9 @@ from serializers import send_data, send_message, send_error, send_success
 from decorators import authenticated, with_game
 from models import User
 from cache import delete_cache, add_to_queue
-from helpers import generateToken
+from helpers import generate_token
 from app import app
-from mail import send_mail_template
+from connections import send_mail_template, send_ws
 
 
 @app.route('/')
@@ -89,7 +89,7 @@ def logout():
 
 @app.route('/game/new')
 def new_game():
-    token = generateToken()
+    token = generate_token()
     add_to_queue(token)
     return send_data({'game': token})
 

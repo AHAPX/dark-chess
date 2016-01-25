@@ -1,6 +1,7 @@
 from smtplib import SMTP, SMTP_SSL
 
 from celery import Celery
+from redis import StrictRedis
 
 from app import app
 import config
@@ -26,3 +27,8 @@ def send_mail(msg, recipients, sender=None):
     smtp.sendmail(sender, recipients, msg.as_string())
     smtp.close()
 
+
+@celery.task
+def send_ws(msg):
+    redis = StrictRedis(config.CACHE_HOST, config.CACHE_PORT)
+    redis.publish(config.WS_CHANNEL, msg)

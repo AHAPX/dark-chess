@@ -1,4 +1,4 @@
-from helpers import onBoard, invertColor, pos2coors, coors2pos
+from helpers import onBoard, invert_color, pos2coors, coors2pos
 from errors import (
     OutOfBoardError, CellIsBusyError, EndGame, WhiteWon, BlackWon, Draw,
     WrongMoveError, NotFoundError, WrongTurnError, WrongFigureError
@@ -455,7 +455,7 @@ class Game(object):
                 raise exc
         else:
             result = figure, castled
-        self.current_player = invertColor(self.current_player)
+        self.current_player = invert_color(self.current_player)
         return result
 
     @property

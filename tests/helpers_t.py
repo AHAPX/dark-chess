@@ -1,7 +1,10 @@
 import unittest
 
 import config
-from helpers import onBoard, pos2coors, coors2pos, invertColor, encryptPassword, generateToken
+from helpers import (
+    onBoard, pos2coors, coors2pos, invert_color, encrypt_password, generate_token,
+    with_context
+)
 from consts import WHITE, BLACK
 
 
@@ -37,13 +40,20 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(coors2pos('a1'), (1, 1))
         self.assertEqual(coors2pos('h8'), (8, 8))
 
-    def test_invertColor(self):
-        self.assertEqual(invertColor(WHITE), BLACK)
-        self.assertEqual(invertColor(BLACK), WHITE)
+    def test_invert_color(self):
+        self.assertEqual(invert_color(WHITE), BLACK)
+        self.assertEqual(invert_color(BLACK), WHITE)
 
-    def test_encryptPassword(self):
+    def test_encrypt_password(self):
         config.PASSWORD_SALT = 'salt'
-        self.assertEqual(encryptPassword('password'), 'd514dee5e76bbb718084294c835f312c')
+        self.assertEqual(encrypt_password('password'), 'd514dee5e76bbb718084294c835f312c')
 
-    def test_generateToken(self):
-        self.assertTrue(len(generateToken()) > 10)
+    def test_generate_token(self):
+        self.assertTrue(len(generate_token()) > 10)
+
+    def test_with_context(self):
+        expect = {
+            'key': 'value',
+            'site_url': config.SITE_URL,
+        }
+        self.assertEqual(with_context({'key': 'value'}), expect)

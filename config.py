@@ -40,8 +40,8 @@ DEFAULT_MAIL_SENDER = 'info@dark-chess'
 MAIL_SUBJECT_PREFIX = 'dask-chess: '
 
 # celery config
-CELERY_BROKER_URL='redis://localhost:6379/1',
-CELERY_RESULT_BACKEND='redis://localhost:6379/1'
+CELERY_BROKER_URL = 'redis://localhost:6379/1'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
 
 
 # load local config if exists
