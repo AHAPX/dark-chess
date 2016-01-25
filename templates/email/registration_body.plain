@@ -1,0 +1,3 @@
+Hello\n
+You signed up with username "{{username}}"\n
+To verificate your email you should open link {{site_url}}/auth/verification/{{token}}\n

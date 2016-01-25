@@ -38,3 +38,11 @@ def encryptPassword(password):
 
 def generateToken():
     return str(uuid.uuid4())
+
+
+def with_context(data):
+    context = {
+        'site_url': config.SITE_URL,
+    }
+    context.update(data)
+    return context
