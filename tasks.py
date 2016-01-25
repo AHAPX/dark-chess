@@ -1,4 +1,4 @@
-from smtplib import SMTP
+from smtplib import SMTP, SMTP_SSL
 
 from celery import Celery
 
@@ -13,7 +13,11 @@ celery.conf.update(app.config)
 @celery.task
 def send_mail(msg, recipients, sender=None):
     sender = sender or config.DEFAULT_MAIL_SENDER
-    smtp = SMTP(host=config.MAIL_SERVER, port=config.MAIL_PORT)
+    if config.MAIL_USE_SSL:
+        smtp_cls = SMTP_SSL
+    else:
+        smtp_cls = SMTP
+    smtp = smtp_cls(host=config.MAIL_SERVER, port=config.MAIL_PORT)
     if config.MAIL_USE_TLS:
         smtp.ehlo()
         smtp.starttls()

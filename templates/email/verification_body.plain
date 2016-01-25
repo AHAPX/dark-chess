@@ -1,3 +1,2 @@
 Hello, {{username}}
-You signed up successfully
 If you'd like to verificate your email you should open {{site_url}}/auth/verification/{{token}}

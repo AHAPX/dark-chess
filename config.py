@@ -6,7 +6,7 @@ DB = SqliteExtDatabase('/tmp/dark_chess.db')
 DEBUG = False
 
 # url
-SITE_URL = 'http://localhost/'
+SITE_URL = 'http://localhost'
 
 # dark-chess server config
 HOST = '0.0.0.0'
@@ -28,6 +28,7 @@ PASSWORD_SALT = ''
 MAIL_SERVER = 'localhost'
 MAIL_PORT = 25
 MAIL_USE_TLS = False
+MAIL_USE_SSL = False
 MAIL_USERNAME = None
 MAIL_PASSWORD = None
 DEFAULT_MAIL_SENDER = 'info@dark-chess'
