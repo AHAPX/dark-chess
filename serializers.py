@@ -1,4 +1,5 @@
 import logging
+from functools import reduce
 
 from flask import jsonify
 
@@ -48,7 +49,7 @@ class BoardSerializer(BaseSerializer):
         data = {}
         if self._color == UNKNOWN:
             raise AttributeError('color is not specified')
-        figures = filter(lambda a: a.color == self._color, self._model.figures)
+        figures = [f for f in self._model.figures if f.color == self._color]
         cells = reduce(lambda a, b: a + b, [f.getVisibleCells() for f in figures])
         for cell in cells:
             data[pos2coors(*cell)] = FigureSerializer(self._model.cell2Figure(*cell)).calc()

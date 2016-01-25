@@ -10,13 +10,17 @@ import consts
 from helpers import with_context
 
 
-def send_mail(subject, body, recipients, sender=None):
-    msg = MIMEText(body, 'text')
+def fill_msg(msg, subject, recipients, sender=None):
     msg['Subject'] = '{}{}'.format(config.MAIL_SUBJECT_PREFIX, subject)
     msg['From'] = sender or config.DEFAULT_MAIL_SENDER
     msg['To'] = recipients[0]
     if len(recipients) > 1:
         msg['Cc'] = recipients[1:]
+    return msg
+
+
+def send_mail(subject, body, recipients, sender=None):
+    msg = fill_msg(MIMEText(body, 'text'), subject, recipients, sender)
     tasks.send_mail.delay(msg, recipients, sender)
 
 
@@ -26,12 +30,7 @@ def send_mail_template(name, recipients, sender=None, data={}):
     body_plain = render_template('email/{}_body.plain'.format(name), **data)
     body_html = render_template('email/{}_body.html'.format(name), **data)
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = '{}{}'.format(config.MAIL_SUBJECT_PREFIX, subject)
-    msg['From'] = sender or config.DEFAULT_MAIL_SENDER
-    msg['To'] = recipients[0]
-    if len(recipients) > 1:
-        msg['Cc'] = recipients[1:]
+    msg = fill_msg(MIMEMultipart('alternative'), subject, recipients, sender)
     msg.attach(MIMEText(body_plain, 'plain'))
     msg.attach(MIMEText(body_html, 'html'))
     tasks.send_mail.delay(msg, recipients, sender)

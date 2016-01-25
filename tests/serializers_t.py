@@ -17,19 +17,19 @@ class TestSerializer(TestCaseBase):
         with self.app.test_request_context():
             # success
             resp = serializers.BaseSerializer({'data': 'test'}).to_json()
-            data = json.loads(resp.data)
+            data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
             self.assertTrue(data['rc'])
             self.assertEqual(data['data'], 'test')
             # error
             resp = serializers.BaseSerializer('data').to_json()
-            data = json.loads(resp.data)
+            data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
             self.assertFalse(data['rc'])
             self.assertEqual(data['error'], 'system error')
             # succes with rc = False
             resp = serializers.BaseSerializer({'rc': False, 'data': 'test'}).to_json()
-            data = json.loads(resp.data)
+            data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
             self.assertFalse(data['rc'])
             self.assertEqual(data['data'], 'test')
@@ -38,7 +38,7 @@ class TestSerializer(TestCaseBase):
         with self.app.test_request_context():
             figure = Board('Ke1').getFigure(WHITE, KING)
             resp = serializers.FigureSerializer(figure).to_json()
-            data = json.loads(resp.data)
+            data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
             self.assertTrue(data['rc'])
             self.assertEqual(data['kind'], 'king')
@@ -50,7 +50,7 @@ class TestSerializer(TestCaseBase):
         with self.app.test_request_context():
             board = Board('Pc2,Qd1,Nh6,ke8')
             resp = serializers.BoardSerializer(board, WHITE).to_json()
-            data = json.loads(resp.data)
+            data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
             self.assertTrue(data['rc'])
             expect = {
@@ -69,7 +69,7 @@ class TestSerializer(TestCaseBase):
         with self.app.test_request_context():
             board = Board('Pc2,Qd1,Nh6,ke8')
             resp = serializers.BoardSerializer(board, BLACK).to_json()
-            data = json.loads(resp.data)
+            data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
             self.assertTrue(data['rc'])
             expect = {
