@@ -13,7 +13,9 @@ def set_cache(key, data, time=None):
 
 
 def get_cache(key):
-    return redis.get(key)
+    value = redis.get(key)
+    if value:
+        return value.decode()
 
 
 def delete_cache(key):

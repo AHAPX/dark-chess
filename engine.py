@@ -389,7 +389,7 @@ class King(Figure):
             rook = self.board.cell2Figure(x=rook_x, y=y)
             if not rook or rook.moved:
                 return False
-        except NotFoundError, OutOfBoardError:
+        except (NotFoundError, OutOfBoardError):
             return False
         for cell in cells:
             try:

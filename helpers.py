@@ -33,7 +33,8 @@ def invertColor(color):
 
 
 def encryptPassword(password):
-    return md5(md5(password).hexdigest() + config.PASSWORD_SALT).hexdigest()
+    pass_md5 = md5(password.encode()).hexdigest()
+    return md5((pass_md5 + config.PASSWORD_SALT).encode()).hexdigest()
 
 
 def generateToken():
