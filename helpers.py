@@ -47,3 +47,11 @@ def with_context(data):
     }
     context.update(data)
     return context
+
+
+def get_queue_name(prefix):
+    return '{}_{}'.format(prefix, config.GAME_QUEUE_NAME)
+
+
+def get_prefix(game_type, game_limit=None):
+    return '{}-{}'.format(game_type, game_limit if game_limit is not None else '*')

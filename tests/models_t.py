@@ -1,10 +1,11 @@
+import unittest
 import time
 from datetime import datetime, timedelta
 
 import config
 import errors
 from tests.base import TestCaseDB
-from consts import WHITE, BLACK
+from consts import WHITE, BLACK, TYPE_SLOW, TYPE_FAST
 from models import User, Game, Move
 from cache import get_cache
 
@@ -33,14 +34,18 @@ class TestModels(TestCaseDB):
         self.assertEqual(game.next_color, WHITE)
         self.assertEqual(Game.select().count(), 1)
         self.assertEqual(Move.select().count(), 0)
-        game.add_move('K', 'e1-e2')
-        self.assertEqual(Move.select().count(), 1)
+        self.assertFalse(game.ended)
         time.sleep(1)
-        game.save_state('Ke2,k28', BLACK)
+        game.add_move('K', 'e1-e2', 'Ke2,ke8')
+        self.assertEqual(Move.select().count(), 1)
         game = Game.get(pk=game.pk)
         self.assertEqual(game.next_color, BLACK)
-        self.assertEqual(game.state, 'Ke2,k28')
+        self.assertEqual(game.state, 'Ke2,ke8')
         self.assertTrue((game.date_state - game.date_created).total_seconds() > 1)
+        self.assertEqual(round(game.moves.get().time_move), 1)
+        self.assertFalse(game.ended)
+        game.add_move('k', 'e8-e7', 'Ke2,ke7', True)
+        self.assertTrue(game.ended)
 
     def test_verification(self):
         user = User.add('user1', 'passwd')
@@ -61,3 +66,65 @@ class TestModels(TestCaseDB):
         self.assertTrue(user.verified)
         with self.assertRaises(errors.VerifiedError):
             user.get_verification()
+
+    def test_time_left_1(self):
+        game = Game.create(
+            player_white='123', player_black='456', state='Ke1,ke8',
+            type_game=TYPE_FAST, time_limit=20
+        )
+        Move.create(game=game, number=1, figure='K', move='e1-e2', time_move=9, color=WHITE)
+        Move.create(game=game, number=2, figure='k', move='e8-e7', time_move=3, color=BLACK)
+        Move.create(game=game, number=3, figure='K', move='e2-e3', time_move=5, color=WHITE)
+        Move.create(game=game, number=4, figure='k', move='e7-e8', time_move=6, color=BLACK)
+        self.assertFalse(game.ended)
+        self.assertEqual(round(game.time_left(WHITE)), 6)
+        self.assertEqual(round(game.time_left(BLACK)), 11)
+        self.assertFalse(game.is_time_over())
+        game.date_state = datetime.now() - timedelta(seconds=3)
+        self.assertEqual(round(game.time_left(WHITE)), 3)
+        self.assertEqual(round(game.time_left(BLACK)), 11)
+        self.assertFalse(game.is_time_over())
+        game.date_state = datetime.now() - timedelta(seconds=10)
+        self.assertTrue(game.is_time_over())
+        self.assertTrue(game.ended)
+        self.assertFalse(game.is_time_over())
+
+    def test_time_left_2(self):
+        game = Game.create(
+            player_white='123', player_black='456', state='Ke1,ke8',
+            type_game=TYPE_SLOW, time_limit=10
+        )
+        Move.create(game=game, number=1, figure='K', move='e1-e2', time_move=9, color=WHITE)
+        Move.create(game=game, number=2, figure='k', move='e8-e7', time_move=3, color=BLACK)
+        Move.create(game=game, number=3, figure='K', move='e2-e3', time_move=5, color=WHITE)
+        Move.create(game=game, number=4, figure='k', move='e7-e8', time_move=6, color=BLACK)
+        self.assertFalse(game.ended)
+        self.assertEqual(round(game.time_left(WHITE)), 10)
+        self.assertEqual(round(game.time_left(BLACK)), 10)
+        self.assertFalse(game.is_time_over())
+        game.date_state = datetime.now() - timedelta(seconds=3)
+        self.assertEqual(round(game.time_left(WHITE)), 7)
+        self.assertEqual(round(game.time_left(BLACK)), 10)
+        self.assertFalse(game.is_time_over())
+        game.date_state = datetime.now() - timedelta(seconds=10)
+        self.assertTrue(game.is_time_over())
+        self.assertTrue(game.ended)
+        self.assertFalse(game.is_time_over())
+
+    def test_time_left_3(self):
+        game = Game.create(
+            player_white='123', player_black='456', state='Ke1,ke8',
+            time_limit=10
+        )
+        Move.create(game=game, number=1, figure='K', move='e1-e2', time_move=9, color=WHITE)
+        Move.create(game=game, number=2, figure='k', move='e8-e7', time_move=3, color=BLACK)
+        Move.create(game=game, number=3, figure='K', move='e2-e3', time_move=5, color=WHITE)
+        Move.create(game=game, number=4, figure='k', move='e7-e8', time_move=6, color=BLACK)
+        self.assertFalse(game.ended)
+        self.assertIsNone(game.time_left(WHITE))
+        self.assertIsNone(game.time_left(BLACK))
+        self.assertFalse(game.is_time_over())
+        game.date_state = datetime.now() - timedelta(days=1000)
+        self.assertIsNone(game.time_left(WHITE))
+        self.assertIsNone(game.time_left(BLACK))
+        self.assertFalse(game.is_time_over())

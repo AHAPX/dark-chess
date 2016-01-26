@@ -41,3 +41,40 @@ WS_END   = 0x0010
 WS_WIN   = 0x0011
 WS_LOSE  = 0x0012
 WS_DRAW  = 0x0013
+
+# types of games
+TYPE_NOLIMIT = 1
+TYPE_SLOW    = 2
+TYPE_FAST    = 3
+
+TYPES = {
+    TYPE_NOLIMIT: {
+        'name': 'no limit',
+        'description': 'no time limits',
+        'periods': {},
+    },
+    TYPE_SLOW: {
+        'name': 'slow',
+        'description': 'long game, time limit for each move, no limit for game',
+        'periods': {
+            '1d': ('1 day', 24 * 60 * 60),
+            '3d': ('3 days', 3 * 24 * 60 * 60),
+            '7d': ('7 days', 7 * 24 * 60 * 60),
+            '15d': ('15 days', 15 * 24 * 60 * 60),
+        },
+    },
+    TYPE_FAST: {
+        'name': 'fast',
+        'description': 'short game, time limit for game',
+        'periods': {
+            '1m': ('1 minute', 1 * 60),
+            '5m': ('5 minutes', 5 * 60),
+            '10m': ('10 minutes', 10 * 60),
+            '30m': ('30 minutes', 30 * 60),
+            '1h': ('1 hour', 60 * 60),
+            '3h': ('3 hours', 3 * 60 * 60),
+        },
+    },
+}
+
+TYPES_NAMES = {value['name']: key for key, value in TYPES.items()}

@@ -1,12 +1,11 @@
 import logging
 import pickle
-import datetime
 
 import engine
 import models
 import consts
 import errors
-from serializers import GameSerializer, BoardSerializer, send_error, send_message, send_success
+from serializers import BoardSerializer, send_error, send_message, send_success
 from helpers import coors2pos, invert_color
 from cache import set_cache, get_cache
 from connections import send_ws
@@ -21,16 +20,17 @@ class Game(object):
         self.white = white_token
         self.black = black_token
         self._loaded_by = None
-        self.ended = False
 
     @classmethod
-    def new_game(cls, white_token, black_token, white_user=None, black_user=None):
+    def new_game(cls, white_token, black_token, type_game, time_limit, white_user=None, black_user=None):
         game = cls(white_token, black_token)
         game.game = engine.Game()
         game.model = models.Game.create(
             player_white=white_user,
             player_black=black_user,
             state=str(game.game.board),
+            type_game=type_game,
+            time_limit=time_limit,
         )
         set_cache(white_token, pickle.dumps((game.model.pk, consts.WHITE, black_token)))
         set_cache(black_token, pickle.dumps((game.model.pk, consts.BLACK, white_token)))
@@ -50,8 +50,9 @@ class Game(object):
             game.model = models.Game.get(pk=game_id)
             game.game = engine.Game(game.model.state, game.model.next_color)
             game._loaded_by = color
-            if game.model.date_end:
-                game.ended = True
+            if game.model.is_time_over():
+                game.send_ws('you lose by time', consts.WS_LOSE, color)
+                game.send_ws('you win by time', consts.WS_WIN, invert_color(color))
         except:
             raise errors.GameNotFoundError
         return game
@@ -63,14 +64,22 @@ class Game(object):
             raise ValueError('color is not declared')
         return color
 
-    def get_board(self, color=None, serialize=False):
-        board = BoardSerializer(self.game.board, self.get_color(color))
-        if serialize:
-            return board.to_json()
-        return board.calc()
+    def get_board(self, color=None):
+        return BoardSerializer(self.game.board, self.get_color(color)).calc()
+
+    def get_info(self, color=None):
+        color = self.get_color(color)
+        return {
+            'board': self.get_board(color),
+            'time_left': self.time_left(color),
+            'enemy_time_left': self.time_left(invert_color(color)),
+        }
+
+    def time_left(self, color=None):
+        return round(self.model.time_left(self.get_color(color)), 1)
 
     def move(self, coor1, coor2, color=None):
-        if self.ended:
+        if self.model.ended:
             return send_error('game is over')
         game_over = None
         try:
@@ -81,10 +90,9 @@ class Game(object):
         except errors.BaseException as exc:
             return send_error(exc.message)
         try:
-            num = self.model.add_move(figure.symbol, move).number
-            if game_over:
-                self.model.date_end = datetime.datetime.now()
-            self.model.save_state(str(self.game.board), self.game.current_player)
+            num = self.model.add_move(
+                figure.symbol, move, str(self.game.board), game_over
+            ).number
         except Exception as exc:
             logger.error(exc)
             return send_error('system error')
@@ -95,6 +103,8 @@ class Game(object):
             'number': num,
             'move': move,
             'board': self.get_board(invert_color(color)),
+            'time_left': self.time_left(invert_color(color)),
+            'enemy_time_left': self.time_left(color),
         }
         self.send_ws(msg, consts.WS_MOVE, invert_color(color))
         return send_success()

@@ -3,7 +3,7 @@ import unittest
 import config
 from helpers import (
     onBoard, pos2coors, coors2pos, invert_color, encrypt_password, generate_token,
-    with_context
+    with_context, get_queue_name, get_prefix
 )
 from consts import WHITE, BLACK
 
@@ -57,3 +57,10 @@ class TestHelpers(unittest.TestCase):
             'site_url': config.SITE_URL,
         }
         self.assertEqual(with_context({'key': 'value'}), expect)
+
+    def test_get_queue_name(self):
+        self.assertEqual(get_queue_name('pref'), 'pref_{}'.format(config.GAME_QUEUE_NAME))
+
+    def test_get_prefix(self):
+        self.assertEqual(get_prefix(123), '123-*')
+        self.assertEqual(get_prefix(123, 30), '123-30')

@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import peewee
 
 import config
 import consts
 import errors
-from helpers import encrypt_password, generate_token
+from helpers import encrypt_password, generate_token, invert_color
 from cache import set_cache, get_cache, delete_cache
 
 
@@ -80,16 +80,57 @@ class Game(BaseModel):
     state = peewee.CharField(null=True)
     date_state = peewee.DateTimeField(default=datetime.now)
     next_color = peewee.IntegerField(default=consts.WHITE)
+    type_game = peewee.IntegerField(default=consts.TYPE_NOLIMIT)
+    time_limit = peewee.TimeField(null=True)
 
-    def add_move(self, figure, move):
-        num = self.moves.select().count() + 1
-        return Move.create(game=self, number=num, figure=figure, move=move)
+    def add_move(self, figure, move, state, is_over=False):
+        with config.DB.atomic():
+            color = self.next_color
+            num = self.moves.select().count() + 1
+            time_move = (datetime.now() - self.date_state).total_seconds()
+            self.state = state
+            self.next_color = invert_color(color)
+            self.date_state = datetime.now()
+            if is_over:
+                self.date_end = datetime.now()
+            self.save()
+            return Move.create(
+                game=self, number=num, figure=figure, move=move,
+                time_move=time_move, color=color
+            )
 
-    def save_state(self, state, next_color):
-        self.state = state
-        self.next_color = next_color
-        self.date_state = datetime.now()
-        self.save()
+    @property
+    def ended(self):
+        return bool(self.date_end)
+
+    def is_time_over(self):
+        if self.ended:
+            return False
+        if self.type_game == consts.TYPE_SLOW:
+            if (datetime.now() - self.date_state).total_seconds() > self.time_limit:
+                self.date_end = self.date_state + timedelta(seconds=self.time_limit)
+                self.save()
+                return True
+        elif self.type_game == consts.TYPE_FAST:
+            moves = self.moves.select(Move.time_move).where(Move.color == self.next_color)
+            time_spent = sum([m.time_move for m in moves])
+            if time_spent + (datetime.now() - self.date_state).total_seconds() > self.time_limit:
+                self.date_end = self.date_state + timedelta(seconds=self.time_limit - time_spent)
+                self.save()
+                return True
+        return False
+
+    def time_left(self, color):
+        if self.type_game == consts.TYPE_SLOW:
+            if self.next_color == color:
+                return self.time_limit - (datetime.now() - self.date_state).total_seconds()
+            return self.time_limit
+        if self.type_game == consts.TYPE_FAST:
+            moves = self.moves.select(Move.time_move).where(Move.color == color)
+            time_spent = sum([m.time_move for m in moves])
+            if self.next_color == color:
+                return self.time_limit - time_spent - (datetime.now() - self.date_state).total_seconds()
+            return self.time_limit - time_spent
 
 
 class Move(BaseModel):
@@ -99,6 +140,8 @@ class Move(BaseModel):
     figure = peewee.FixedCharField(max_length=1)
     move = peewee.CharField(max_length=5)
     date_created = peewee.DateTimeField(default=datetime.now)
+    time_move = peewee.FloatField()
+    color = peewee.IntegerField()
 
 
 if __name__ == '__main__':

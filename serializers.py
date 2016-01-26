@@ -62,7 +62,11 @@ class GameSerializer(BaseSerializer):
 
     def calc(self):
         return {
-            'moves': [('{}{}'.format(m['figure'].symbol, pos2coors(m['x1'], m['y1'])), pos2coors(m['x2'], m['y2'])) for m in self._model.moves]
+            'moves': [(
+                m['figure'].symbol,
+                pos2coors(m['x1'], m['y1']),
+                pos2coors(m['x2'], m['y2'])
+            ) for m in self._model.moves],
         }
 
 
