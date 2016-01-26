@@ -4,13 +4,15 @@ from flask import request, make_response
 from validate_email import validate_email
 
 import config
+import consts
 from serializers import send_data, send_message, send_error, send_success
 from decorators import authenticated, with_game
 from models import User
-from cache import delete_cache, add_to_queue
+from cache import delete_cache, add_to_queue, get_from_queue
 from helpers import generate_token
 from app import app
 from connections import send_mail_template, send_ws
+from game import Game
 
 
 @app.route('/')
@@ -90,14 +92,18 @@ def logout():
 @app.route('/game/new')
 def new_game():
     token = generate_token()
-    add_to_queue(token)
+    enemy_token = get_from_queue()
+    if enemy_token:
+        game = Game.new_game(enemy_token, token)
+    else:
+        add_to_queue(token)
     return send_data({'game': token})
 
 
 @app.route('/game/info/<token>')
 @with_game
 def game_info(game):
-    return game.get_board()
+    return game.get_board(serialize=True)
 
 
 @app.route('/game/move/<token>/<move>')

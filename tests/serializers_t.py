@@ -77,6 +77,3 @@ class TestSerializer(TestCaseBase):
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
             }
             self.compare_dicts(data, expect)
-
-
-

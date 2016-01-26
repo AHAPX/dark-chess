@@ -43,6 +43,9 @@ MAIL_SUBJECT_PREFIX = 'dask-chess: '
 CELERY_BROKER_URL = 'redis://localhost:6379/1'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
 
+# game config
+GAME_QUEUE_NAME = 'players_queue'
+
 
 # load local config if exists
 try:

@@ -14,8 +14,10 @@ def set_cache(key, data, time=None):
 
 def get_cache(key):
     value = redis.get(key)
-    if value:
+    try:
         return value.decode()
+    except:
+        return value
 
 
 def delete_cache(key):
@@ -23,4 +25,12 @@ def delete_cache(key):
 
 
 def add_to_queue(token):
-    redis.rpush('players_queue', token)
+    redis.rpush(config.GAME_QUEUE_NAME, token.encode())
+
+
+def get_from_queue():
+    value = redis.lpop(config.GAME_QUEUE_NAME)
+    try:
+        return value.decode()
+    except:
+        return value

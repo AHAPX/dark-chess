@@ -53,7 +53,7 @@ class TestModels(TestCaseDB):
         token = user.get_verification()
         with self.assertRaises(errors.VerificationRequestError):
             user.get_verification()
-        user.date_verification_token = datetime.now() - timedelta(seconds=config.VERIFICATION_PERIOD+10)
+        user.date_verification_token = datetime.now() - timedelta(seconds=config.VERIFICATION_PERIOD + 1)
         user.save()
         token = user.get_verification()
         self.assertEqual(User.verify_email(token).pk, user.pk)

@@ -287,7 +287,7 @@ class Pawn(Figure):
             elif self.y > 1:
                 cells.append((self.x, self.y - 1))
             cells += [(self.x - 1, self.y - 1), (self.x + 1, self.y - 1)]
-        return cells
+        return [cell for cell in cells if onBoard(*cell)]
 
 
 class Bishop(Figure):

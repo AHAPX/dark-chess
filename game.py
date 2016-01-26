@@ -34,6 +34,8 @@ class Game(object):
         )
         set_cache(white_token, pickle.dumps((game.model.pk, consts.WHITE, black_token)))
         set_cache(black_token, pickle.dumps((game.model.pk, consts.BLACK, white_token)))
+        game.send_ws(game.get_board(consts.WHITE), consts.WS_START, consts.WHITE)
+        game.send_ws(game.get_board(consts.BLACK), consts.WS_START, consts.BLACK)
         return game
 
     @classmethod
@@ -61,8 +63,11 @@ class Game(object):
             raise ValueError('color is not declared')
         return color
 
-    def get_board(self, color=None):
-        return BoardSerializer(self.game.board, self.get_color(color)).to_json()
+    def get_board(self, color=None, serialize=False):
+        board = BoardSerializer(self.game.board, self.get_color(color))
+        if serialize:
+            return board.to_json()
+        return board.calc()
 
     def move(self, coor1, coor2, color=None):
         if self.ended:
@@ -83,14 +88,21 @@ class Game(object):
         except Exception as exc:
             logger.error(exc)
             return send_error('system error')
-        enemy_token = self.white if color == consts.BLACK else self.black
         if game_over:
-            send_ws('you lose', consts.WS_LOSE, enemy_token)
+            self.send_ws('you lose', consts.WS_LOSE, invert_color(color))
             return send_message(game_over)
         msg = {
             'number': num,
             'move': move,
             'board': self.get_board(invert_color(color)),
         }
-        send_ws(msg, consts.WS_MOVE, enemy_token)
+        self.send_ws(msg, consts.WS_MOVE, invert_color(color))
         return send_success()
+
+    def send_ws(self, msg, signal, color=consts.UNKNOWN):
+        tags = []
+        if color != consts.WHITE:
+            tags.append(self.black)
+        if color != consts.BLACK:
+            tags.append(self.white)
+        send_ws(msg, signal, tags)
