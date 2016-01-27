@@ -1,12 +1,11 @@
-import unittest
-
 import errors
+from tests.base import TestCaseBase
 from consts import WHITE, BLACK, PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING
 from helpers import coors2pos
 from engine import Figure, Pawn, Rook, Knight, Bishop, Queen, King, Board, Game
 
 
-class TestFigure(unittest.TestCase):
+class TestFigure(TestCaseBase):
 
     def test_symbol(self):
         self.assertEqual(str(Figure(1, 1, WHITE, None)), '?a1')
@@ -53,7 +52,7 @@ class TestFigure(unittest.TestCase):
         self.assertEqual(len(board._figures[WHITE][PAWN]), 7)
 
 
-class TestFiguresMoves(unittest.TestCase):
+class TestFiguresMoves(TestCaseBase):
 
     def check_cases(self, color, kind, cases):
         for (board, results) in cases:
@@ -149,7 +148,7 @@ class TestFiguresMoves(unittest.TestCase):
         self.check_cases_visible(WHITE, KING, cases_vis)
 
 
-class TestKing(unittest.TestCase):
+class TestKing(TestCaseBase):
 
     def test_aura(self):
         results = ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']
@@ -250,7 +249,7 @@ class TestKing(unittest.TestCase):
         self.assertEqual(king.try_to_castle(3, 8), '0-0-0')
 
 
-class TestGame(unittest.TestCase):
+class TestGame(TestCaseBase):
 
     def test_move(self):
         game = Game('Kf3,Pe2,ke8,qf7')

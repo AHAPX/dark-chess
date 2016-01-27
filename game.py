@@ -1,5 +1,4 @@
 import logging
-import pickle
 
 import engine
 import models
@@ -7,7 +6,7 @@ import consts
 import errors
 from serializers import BoardSerializer, send_error, send_message, send_success
 from helpers import coors2pos, invert_color
-from cache import set_cache, get_cache
+from cache import set_cache, get_cache, delete_cache
 from connections import send_ws
 from decorators import formatted
 from format import format
@@ -34,8 +33,8 @@ class Game(object):
             type_game=type_game,
             time_limit=time_limit,
         )
-        set_cache(white_token, pickle.dumps((game.model.pk, consts.WHITE, black_token)))
-        set_cache(black_token, pickle.dumps((game.model.pk, consts.BLACK, white_token)))
+        set_cache(white_token, (game.model.pk, consts.WHITE, black_token))
+        set_cache(black_token, (game.model.pk, consts.BLACK, white_token))
         game.send_ws(game.get_board(consts.WHITE), consts.WS_START, consts.WHITE)
         game.send_ws(game.get_board(consts.BLACK), consts.WS_START, consts.BLACK)
         return game
@@ -43,7 +42,7 @@ class Game(object):
     @classmethod
     def load_game(cls, token):
         try:
-            game_id, color, enemy_token = pickle.loads(get_cache(token))
+            game_id, color, enemy_token = get_cache(token)
             if color == consts.WHITE:
                 wt, bt = token, enemy_token
             elif color == consts.BLACK:
@@ -55,7 +54,7 @@ class Game(object):
             if game.model.is_time_over():
                 game.send_ws('you lose by time', consts.WS_LOSE, color)
                 game.send_ws('you win by time', consts.WS_WIN, invert_color(color))
-            self.check_draw()
+            game.check_draw()
         except:
             raise errors.GameNotFoundError
         return game
@@ -129,21 +128,25 @@ class Game(object):
     def draw_accept(self, color=None):
         if self.model.ended:
             return send_error('game is over')
-        set_cache(_get_draw_name(self.get_color(color)), True)
+        color = self.get_color(color)
+        set_cache(self._get_draw_name(color), True)
         if self.check_draw():
             return send_message('game is over')
+        self.send_ws('opponent offered draw', consts.WS_DRAW_REQUEST, invert_color(color))
         return send_success()
 
     def draw_refuse(self, color=None):
         if self.model.ended:
             return send_error('game is over')
-        delete_cache(_get_draw_name(self.get_color(color)))
+        color = self.get_color
+        delete_cache(self._get_draw_name(color))
+        delete_cache(self._get_draw_name(invert_color(color)))
         return send_success()
 
     def check_draw(self):
         if not self.model.ended:
-            name1 = _get_draw_name(consts.WHITE)
-            name2 = _get_draw_name(consts.BLACK)
+            name1 = self._get_draw_name(consts.WHITE)
+            name2 = self._get_draw_name(consts.BLACK)
             if get_cache(name1) and get_cache(name2):
                 self.model.game_over(consts.END_DRAW)
                 delete_cache(name1)

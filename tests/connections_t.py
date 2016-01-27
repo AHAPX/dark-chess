@@ -1,13 +1,13 @@
-import unittest
 from unittest.mock import patch
 import json
 
 import config
+from tests.base import TestCaseBase
 from connections import fill_msg, send_mail, send_mail_template, send_ws
 from app import app
 
 
-class TestConnections(unittest.TestCase):
+class TestConnections(TestCaseBase):
 
     def test_fill_msg(self):
         expect_1 = {

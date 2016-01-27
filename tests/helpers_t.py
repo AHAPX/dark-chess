@@ -1,6 +1,5 @@
-import unittest
-
 import config
+from tests.base import TestCaseBase
 from helpers import (
     onBoard, pos2coors, coors2pos, invert_color, encrypt_password, generate_token,
     with_context, get_queue_name, get_prefix
@@ -8,7 +7,7 @@ from helpers import (
 from consts import WHITE, BLACK
 
 
-class TestHelpers(unittest.TestCase):
+class TestHelpers(TestCaseBase):
 
     def test_onBoard(self):
         self.assertTrue(onBoard(1, 1))

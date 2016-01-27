@@ -15,6 +15,7 @@ PORT = 38599
 # cache config
 CACHE_HOST = 'localhost'
 CACHE_PORT = 6379
+CACHE_DB = 0
 
 # websocket config
 WS_HOST = '0.0.0.0'

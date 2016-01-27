@@ -51,6 +51,6 @@ def formatted(f):
         if isinstance(results, dict):
             return {k: format(v) for k, v in results.items()}
         if isinstance(results, (list, tuple)):
-            return [format(v) for v in results]
+            return type(results)(format(v) for v in results)
         return format(results)
     return decorated

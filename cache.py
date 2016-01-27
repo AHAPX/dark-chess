@@ -1,3 +1,5 @@
+import pickle
+
 from redis import StrictRedis
 
 import consts
@@ -5,20 +7,21 @@ import config
 from helpers import get_queue_name, get_prefix
 
 
-redis = StrictRedis(config.CACHE_HOST, config.CACHE_PORT)
+redis = StrictRedis(config.CACHE_HOST, config.CACHE_PORT, config.CACHE_DB)
 
 
 def set_cache(key, data, time=None):
+    _data = pickle.dumps(data)
     if time:
-        redis.setex(key, time, data)
+        redis.setex(key, time, _data)
     else:
-        redis.set(key, data)
+        redis.set(key, _data)
 
 
 def get_cache(key):
     value = redis.get(key)
     try:
-        return value.decode()
+        return pickle.loads(value)
     except:
         return value
 
