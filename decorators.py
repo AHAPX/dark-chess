@@ -6,7 +6,7 @@ import errors
 from models import User
 from cache import get_cache
 from serializers import send_error
-from game import Game
+from format import format
 
 
 def authenticated(f):
@@ -34,9 +34,23 @@ def authenticated(f):
 def with_game(f):
     @wraps(f)
     def decorated(token, *args, **kwargs):
+        from game import Game
+
         try:
             game = Game.load_game(token)
         except errors.GameNotFoundError as exc:
             return send_error(exc.message)
         return f(game, *args, **kwargs)
+    return decorated
+
+
+def formatted(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        results = f(*args, **kwargs)
+        if isinstance(results, dict):
+            return {k: format(v) for k, v in results.items()}
+        if isinstance(results, (list, tuple)):
+            return [format(v) for v in results]
+        return format(results)
     return decorated

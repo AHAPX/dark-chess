@@ -9,6 +9,8 @@ from serializers import BoardSerializer, send_error, send_message, send_success
 from helpers import coors2pos, invert_color
 from cache import set_cache, get_cache
 from connections import send_ws
+from decorators import formatted
+from format import format
 
 
 logger = logging.getLogger(__name__)
@@ -53,6 +55,7 @@ class Game(object):
             if game.model.is_time_over():
                 game.send_ws('you lose by time', consts.WS_LOSE, color)
                 game.send_ws('you win by time', consts.WS_WIN, invert_color(color))
+            self.check_draw()
         except:
             raise errors.GameNotFoundError
         return game
@@ -67,16 +70,19 @@ class Game(object):
     def get_board(self, color=None):
         return BoardSerializer(self.game.board, self.get_color(color)).calc()
 
+    @formatted
     def get_info(self, color=None):
         color = self.get_color(color)
         return {
             'board': self.get_board(color),
             'time_left': self.time_left(color),
             'enemy_time_left': self.time_left(invert_color(color)),
+            'started_at': self.model.date_created,
+            'ended_at': self.model.date_end,
         }
 
     def time_left(self, color=None):
-        return round(self.model.time_left(self.get_color(color)), 1)
+        return self.model.time_left(self.get_color(color))
 
     def move(self, coor1, coor2, color=None):
         if self.model.ended:
@@ -86,7 +92,7 @@ class Game(object):
             color = self.get_color(color)
             figure, move = self.game.move(color, coors2pos(coor1), coors2pos(coor2))
         except errors.EndGame as exc:
-            game_over, figure, move = exc.message, exc.figure, exc.move
+            game_over, figure, move = exc.reason, exc.figure, exc.move
         except errors.BaseException as exc:
             return send_error(exc.message)
         try:
@@ -103,8 +109,8 @@ class Game(object):
             'number': num,
             'move': move,
             'board': self.get_board(invert_color(color)),
-            'time_left': self.time_left(invert_color(color)),
-            'enemy_time_left': self.time_left(color),
+            'time_left': format(self.time_left(invert_color(color))),
+            'enemy_time_left': format(self.time_left(color)),
         }
         self.send_ws(msg, consts.WS_MOVE, invert_color(color))
         return send_success()
@@ -116,3 +122,39 @@ class Game(object):
         if color != consts.BLACK:
             tags.append(self.white)
         send_ws(msg, signal, tags)
+
+    def _get_draw_name(self, color):
+        return 'game-{}-draw-{}'.format(self.model.pk, color)
+
+    def draw_accept(self, color=None):
+        if self.model.ended:
+            return send_error('game is over')
+        set_cache(_get_draw_name(self.get_color(color)), True)
+        if self.check_draw():
+            return send_message('game is over')
+        return send_success()
+
+    def draw_refuse(self, color=None):
+        if self.model.ended:
+            return send_error('game is over')
+        delete_cache(_get_draw_name(self.get_color(color)))
+        return send_success()
+
+    def check_draw(self):
+        if not self.model.ended:
+            name1 = _get_draw_name(consts.WHITE)
+            name2 = _get_draw_name(consts.BLACK)
+            if get_cache(name1) and get_cache(name2):
+                self.model.game_over(consts.END_DRAW)
+                delete_cache(name1)
+                delete_cache(name2)
+                self.send_ws('game is over', consts.WS_DRAW, consts.WHITE)
+                self.send_ws('game is over', consts.WS_DRAW, consts.BLACK)
+                return True
+        return False
+
+    def resign(self, color=None):
+        if self.model.ended:
+            return send_error('game is over')
+        self.model.game_over(consts.END_RESIGN)
+        return send_success()

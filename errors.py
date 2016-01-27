@@ -1,3 +1,6 @@
+import consts
+
+
 class BaseException(Exception):
     message = 'dark chess base exception'
 
@@ -34,18 +37,21 @@ class NotFoundError(BaseException):
 
 class EndGame(BaseException):
     message = 'game is over'
+    reason = consts.UNKNOWN
 
 
 class WhiteWon(EndGame):
     message = 'white player won'
-
+    reason = consts.END_CHECKMATE
 
 class BlackWon(EndGame):
     message = 'black player won'
+    reason = consts.END_CHECKMATE
 
 
 class Draw(EndGame):
     message = 'draw'
+    reason = consts.END_DRAW
 
 
 class GameNotFoundError(BaseException):

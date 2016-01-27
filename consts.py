@@ -78,3 +78,9 @@ TYPES = {
 }
 
 TYPES_NAMES = {value['name']: key for key, value in TYPES.items()}
+
+# end reasons
+END_CHECKMATE = 1
+END_DRAW = 2
+END_RESIGN = 3
+END_TIME = 4
