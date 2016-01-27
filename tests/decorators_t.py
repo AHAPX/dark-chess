@@ -3,9 +3,10 @@ from datetime import datetime
 
 from tests import TestCaseDB
 import consts
-from decorators import authenticated, with_game, formatted
-from cache import set_cache, redis
+from decorators import authenticated, with_game, formatted, use_cache
+from cache import set_cache, delete_cache, get_cache_func_name
 from models import User, Game
+from helpers import invert_color
 
 
 class TestDecorators(TestCaseDB):
@@ -48,6 +49,7 @@ class TestDecorators(TestCaseDB):
 
     def test_formatted(self):
         func = formatted(lambda a: a)
+        # cases for dict, list and tuple
         cases = [(
             {
                 'k1': 123.546,
@@ -67,3 +69,24 @@ class TestDecorators(TestCaseDB):
         )]
         for data, expect in cases:
             self.assertEqual(func(data), expect)
+
+    def test_use_cache(self):
+        def _func(a, b):
+            invert_color(a)
+            return 'ok'
+
+        func = use_cache(10)(_func)
+        a, b = Game.create(), delete_cache
+        # run first time, no cache
+        with patch('tests.decorators_t.invert_color') as mock:
+            self.assertEqual(func(a, b=b), 'ok')
+            mock.assert_called_once_with(a)
+        # run second time, results from cached
+        with patch('tests.decorators_t.invert_color') as mock:
+            self.assertEqual(func(a, b=b), 'ok')
+            self.assertFalse(mock.called)
+        # delete cache and run again, no cache
+        delete_cache(get_cache_func_name(func, a, b=b))
+        with patch('tests.decorators_t.invert_color') as mock:
+            self.assertEqual(func(a, b=b), 'ok')
+            mock.assert_called_once_with(a)

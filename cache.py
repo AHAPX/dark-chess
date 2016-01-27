@@ -1,4 +1,5 @@
 import pickle
+from hashlib import md5
 
 from redis import StrictRedis
 
@@ -48,3 +49,8 @@ def get_from_any_queue(game_type):
         if token:
             return token, limit
     return None, None
+
+
+def get_cache_func_name(func, *args, **kwargs):
+    fn = '{}.{}(*{}, **{})'.format(func.__module__, func.__name__, args, kwargs)
+    return 'cached_func_{}'.format(md5(fn.encode()).hexdigest())

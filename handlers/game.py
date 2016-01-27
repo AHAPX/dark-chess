@@ -2,7 +2,7 @@ from flask import request
 
 import consts
 from serializers import send_data, send_message, send_error, send_success
-from decorators import with_game
+from decorators import with_game, use_cache
 from cache import add_to_queue, get_from_queue, get_from_any_queue
 from helpers import generate_token, get_prefix
 from game import Game
@@ -10,6 +10,7 @@ from app import app
 
 
 @app.route('/game/types')
+@use_cache()
 def _types():
     types = {
         t['name']: {
@@ -50,13 +51,14 @@ def _new_game():
     return send_data(result)
 
 
-@app.route('/game/info/<token>')
+@app.route('/game/<token>/info')
 @with_game
+@use_cache(10)
 def _game_info(game):
     return send_data(game.get_info())
 
 
-@app.route('/game/move/<token>/<move>')
+@app.route('/game/<token>/move/<move>')
 @with_game
 def _game_move(game, move):
     moves = move.split('-')
@@ -65,19 +67,19 @@ def _game_move(game, move):
     return send_error('move format must be like e2-e4')
 
 
-@app.route('/game/draw/<token>/accept')
+@app.route('/game/<token>/draw/accept')
 @with_game
 def _draw_accept(game):
     return game.draw_accept()
 
 
-@app.route('/game/draw/<token>/refuse')
+@app.route('/game/<token>/draw/refuse')
 @with_game
 def _draw_refuce(game):
     return game.draw_refuse()
 
 
-@app.route('/game/resign/<token>')
+@app.route('/game/<token>/resign')
 @with_game
 def _resign(game):
     return game.resign()

@@ -5,7 +5,7 @@ from validate_email import validate_email
 
 import config
 from serializers import send_data, send_message, send_error, send_success
-from decorators import authenticated
+from decorators import authenticated, use_cache
 from models import User
 from cache import delete_cache
 from connections import send_mail_template
@@ -53,6 +53,7 @@ def _get_verification():
 
 
 @app.route('/auth/verification/<token>')
+@use_cache(60)
 def _verify(token):
     if User.verify_email(token):
         return send_success()

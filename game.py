@@ -103,7 +103,7 @@ class Game(object):
             return send_error('system error')
         if game_over:
             self.send_ws('you lose', consts.WS_LOSE, invert_color(color))
-            return send_message(game_over)
+            return send_message('you win')
         msg = {
             'number': num,
             'move': move,

@@ -239,5 +239,5 @@ class TestGame(TestCaseDB):
             error.move = 'e7-e5'
             mock1.side_effect = error
             self.game.move('e7', 'e5', BLACK)
-            mock.assert_called_once_with(END_CHECKMATE)
+            mock.assert_called_once_with('you win')
             mock2.assert_called_once_with('you lose', WS_LOSE, WHITE)
