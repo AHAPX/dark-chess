@@ -8,6 +8,7 @@ class BaseValidator(object):
     form = {}
 
     def is_valid(self):
+        self._error = None
         return True
 
     def error(self, error):
@@ -39,7 +40,7 @@ class RegistrationValidator(BaseValidator):
                 return self.error('email is not valid')
             if User.select().where(User.email == self.form['email']).count():
                 return self.error('email is already in use')
-        return True
+        return super(RegistrationValidator, self).is_valid()
 
 
 class LoginValidator(BaseValidator):
@@ -53,4 +54,4 @@ class LoginValidator(BaseValidator):
     def is_valid(self):
         if self.form['username'] is None or self.form['password'] is None:
             return self.error('username or password is incorrect')
-        return True
+        return super(LoginValidator, self).is_valid()

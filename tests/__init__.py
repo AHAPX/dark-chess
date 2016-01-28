@@ -8,3 +8,4 @@ from tests.format_t import *
 from tests.decorators_t import *
 from tests.game_t import *
 from tests.handlers_t import *
+from tests.validators_t import *
