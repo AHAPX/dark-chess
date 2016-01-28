@@ -28,8 +28,9 @@ VERIFICATION_TIME = 2 * 60 * 60
 SESSION_TIME = 24 * 60 * 60
 CACHE_MAX_TIME = 24 * 60 * 60
 
-# password config
+# password and tokens config
 PASSWORD_SALT = ''
+TOKEN_SHORT_LENGTH = 10
 
 # email config
 MAIL_SERVER = 'localhost'

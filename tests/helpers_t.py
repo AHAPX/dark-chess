@@ -48,7 +48,14 @@ class TestHelpers(TestCaseBase):
         self.assertEqual(encrypt_password('password'), 'd514dee5e76bbb718084294c835f312c')
 
     def test_generate_token(self):
-        self.assertTrue(len(generate_token()) > 10)
+        self.assertEqual(len(generate_token()), 32)
+        self.assertEqual(len(generate_token(False)), 32)
+        self.assertEqual(len(generate_token(True)), config.TOKEN_SHORT_LENGTH)
+        tokens = []
+        for i in range(1000):
+            token = generate_token(True)
+            self.assertNotIn(token, tokens)
+            tokens.append(token)
 
     def test_with_context(self):
         expect = {

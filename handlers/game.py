@@ -42,7 +42,7 @@ def _new_game():
             enemy_token = get_from_queue(get_prefix(game_type))
     else:
         enemy_token, game_limit = get_from_any_queue(game_type)
-    token = generate_token()
+    token = generate_token(True)
     result = {'game': token}
     if enemy_token:
         game = Game.new_game(enemy_token, token, game_type, game_limit)

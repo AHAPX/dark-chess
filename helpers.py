@@ -37,9 +37,11 @@ def encrypt_password(password):
     return md5((pass_md5 + config.PASSWORD_SALT).encode()).hexdigest()
 
 
-def generate_token():
-    return str(uuid.uuid4())
-
+def generate_token(short=False):
+    token = uuid.uuid4().hex
+    if short:
+        return token[:config.TOKEN_SHORT_LENGTH]
+    return token
 
 def with_context(data):
     context = {
