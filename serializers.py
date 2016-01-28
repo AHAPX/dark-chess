@@ -70,6 +70,16 @@ class GameSerializer(BaseSerializer):
         }
 
 
+class MoveSerializer(BaseSerializer):
+
+    def calc(self):
+        if self._model.move in ('0-0', '0-0-0'):
+            figure = ''
+        else:
+            figure = self._model.figure.upper()
+        return '{}{}'.format(figure, self._model.move)
+
+
 def send_data(data):
     return BaseSerializer(data).to_json()
 

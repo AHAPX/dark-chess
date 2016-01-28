@@ -4,9 +4,12 @@ import engine
 import models
 import consts
 import errors
-from serializers import BoardSerializer, send_error, send_message, send_success
+from serializers import (
+    BoardSerializer, MoveSerializer,
+    send_error, send_message, send_success, send_data,
+)
 from helpers import coors2pos, invert_color
-from cache import set_cache, get_cache, delete_cache
+from cache import set_cache, get_cache, delete_cache, get_cache_func_name
 from connections import send_ws
 from decorators import formatted
 from format import format
@@ -101,6 +104,7 @@ class Game(object):
         except Exception as exc:
             logger.error(exc)
             return send_error('system error')
+        self.onMove()
         if game_over:
             self.send_ws('you lose', consts.WS_LOSE, invert_color(color))
             return send_message('you win')
@@ -161,3 +165,13 @@ class Game(object):
             return send_error('game is over')
         self.model.game_over(consts.END_RESIGN)
         return send_success()
+
+    def moves(self):
+        return send_data({
+            'moves': [MoveSerializer(m).calc() for m in self.model.get_moves()]
+        })
+
+    def onMove(self):
+        for name in ('game_info_handler', 'game_moves_handler'):
+            delete_cache(get_cache_func_name(name, token=self.white))
+            delete_cache(get_cache_func_name(name, token=self.black))

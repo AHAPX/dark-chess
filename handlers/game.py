@@ -1,7 +1,7 @@
 from flask import request
 
 import consts
-from serializers import send_data, send_message, send_error, send_success
+from serializers import send_data, send_error
 from decorators import with_game, use_cache
 from cache import add_to_queue, get_from_queue, get_from_any_queue
 from helpers import generate_token, get_prefix
@@ -52,8 +52,8 @@ def _new_game():
 
 
 @app.route('/game/<token>/info')
+@use_cache(1, name='game_info_handler')
 @with_game
-@use_cache(10)
 def _game_info(game):
     return send_data(game.get_info())
 
@@ -83,3 +83,10 @@ def _draw_refuce(game):
 @with_game
 def _resign(game):
     return game.resign()
+
+
+@app.route('/game/<token>/moves')
+@use_cache(name='game_moves_handler')
+@with_game
+def _moves(game):
+    return game.moves()

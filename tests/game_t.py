@@ -48,6 +48,7 @@ class TestGameInit(TestCaseDB):
                 call('you win by time', WS_WIN, WHITE)
             ])
 
+
 class TestGame(TestCaseDB):
 
     def setUp(self):
@@ -188,11 +189,12 @@ class TestGame(TestCaseDB):
             self.game.resign()
             mock.assert_called_once_with('game is over')
 
-    def test_move(self):
+    @patch('game.Game.onMove')
+    @patch('game.Game.send_ws')
+    def test_move(self, send_ws, onMove):
         # make move successful
         with patch('game.send_success') as mock,\
-                patch('game.Game.get_board') as mock1,\
-                patch('game.Game.send_ws') as mock2:
+                patch('game.Game.get_board') as mock1:
             mock1.return_value = 'board'
             self.game.move('e2', 'e4')
             mock.assert_called_once_with()
@@ -203,11 +205,16 @@ class TestGame(TestCaseDB):
                 'time_left': None,
                 'enemy_time_left': None,
             }
-            mock2.assert_called_once_with(expect, WS_MOVE, BLACK)
+            onMove.assert_called_once_with()
+            send_ws.assert_called_once_with(expect, WS_MOVE, BLACK)
+        send_ws.reset_mock()
+        onMove.reset_mock()
         # wrong turn
         with patch('game.send_error') as mock:
             self.game.move('e7', 'e5')
             mock.assert_called_once_with(errors.WrongTurnError.message)
+            self.assertFalse(onMove.called)
+            self.assertFalse(send_ws.called)
         # wrong color of figure
         with patch('game.send_error') as mock:
             self.game.move('e4', 'e5', BLACK)
@@ -227,12 +234,13 @@ class TestGame(TestCaseDB):
         # db error
         with patch('game.send_error') as mock, patch('models.Game.add_move') as mock1:
             mock1.side_effect = Exception('db error')
-            self.game.move('e7', 'e5', BLACK)
+            with self.assertLogs('game', level='ERROR'):
+                self.game.move('e7', 'e5', BLACK)
             mock.assert_called_once_with('system error')
+        self.assertFalse(onMove.called)
+        self.assertFalse(send_ws.called)
         # move with ending game
-        with patch('game.send_message') as mock,\
-                patch('engine.Game.move') as mock1,\
-                patch('game.Game.send_ws') as mock2:
+        with patch('game.send_message') as mock, patch('engine.Game.move') as mock1:
             error = errors.BlackWon()
             error.reason = END_CHECKMATE
             error.figure = self.game.game.board.getFigure(BLACK, KING)
@@ -240,4 +248,17 @@ class TestGame(TestCaseDB):
             mock1.side_effect = error
             self.game.move('e7', 'e5', BLACK)
             mock.assert_called_once_with('you win')
-            mock2.assert_called_once_with('you lose', WS_LOSE, WHITE)
+            send_ws.assert_called_once_with('you lose', WS_LOSE, WHITE)
+            onMove.assert_called_once_with()
+
+    @patch('game.get_cache_func_name')
+    @patch('game.delete_cache')
+    def test_onMove(self, delete_cache, get_cache_func_name):
+        self.game.onMove()
+        get_cache_func_name.assert_has_calls([
+            call('game_info_handler', token=self.game.white),
+            call('game_info_handler', token=self.game.black),
+            call('game_moves_handler', token=self.game.white),
+            call('game_moves_handler', token=self.game.black),
+        ])
+        self.assertEqual(delete_cache.call_count, 4)

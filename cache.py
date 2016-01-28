@@ -51,6 +51,6 @@ def get_from_any_queue(game_type):
     return None, None
 
 
-def get_cache_func_name(func, *args, **kwargs):
-    fn = '{}.{}(*{}, **{})'.format(func.__module__, func.__name__, args, kwargs)
+def get_cache_func_name(name, *args, **kwargs):
+    fn = '{}(*{}, **{})'.format(name, args, kwargs)
     return 'cached_func_{}'.format(md5(fn.encode()).hexdigest())

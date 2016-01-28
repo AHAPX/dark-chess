@@ -75,7 +75,7 @@ class TestDecorators(TestCaseDB):
             invert_color(a)
             return 'ok'
 
-        func = use_cache(10)(_func)
+        func = use_cache(10, name='test_func')(_func)
         a, b = Game.create(), delete_cache
         # run first time, no cache
         with patch('tests.decorators_t.invert_color') as mock:
@@ -86,7 +86,7 @@ class TestDecorators(TestCaseDB):
             self.assertEqual(func(a, b=b), 'ok')
             self.assertFalse(mock.called)
         # delete cache and run again, no cache
-        delete_cache(get_cache_func_name(func, a, b=b))
+        delete_cache(get_cache_func_name('test_func', a, b=b))
         with patch('tests.decorators_t.invert_color') as mock:
             self.assertEqual(func(a, b=b), 'ok')
             mock.assert_called_once_with(a)

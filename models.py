@@ -147,6 +147,9 @@ class Game(BaseModel):
                 time_left -= (datetime.now() - self.date_state).total_seconds()
             return time_left
 
+    def get_moves(self):
+        return self.moves.select().order_by(Move.number)
+
 
 class Move(BaseModel):
     pk = peewee.PrimaryKeyField()

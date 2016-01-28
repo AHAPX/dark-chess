@@ -44,6 +44,7 @@ class WhiteWon(EndGame):
     message = 'white player won'
     reason = consts.END_CHECKMATE
 
+
 class BlackWon(EndGame):
     message = 'black player won'
     reason = consts.END_CHECKMATE

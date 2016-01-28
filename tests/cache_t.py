@@ -4,8 +4,9 @@ from tests.base import TestCaseCache
 import consts
 from cache import (
     set_cache, get_cache, delete_cache, add_to_queue, get_from_queue,
-    get_from_any_queue, get_prefix
+    get_from_any_queue, get_cache_func_name
 )
+from helpers import get_prefix
 
 
 class TestCache(TestCaseCache):
@@ -45,3 +46,17 @@ class TestCache(TestCaseCache):
             add_to_queue('123', get_prefix(_type, _limit))
             self.assertEqual(get_from_any_queue(_type), ('123', _limit))
         self.assertEqual(get_from_any_queue(_type), (None, None))
+
+    def test_get_cache_func_name(self):
+        cases = [
+            (
+                ((1,), {'b': 2}),
+                'cached_func_b9ff99622beb5f71274947a159578973'
+            ),
+            (
+                (('str', True), {'c': TestCaseCache()}),
+                'cached_func_0a5d39f100f35512e2d07b9cd28dadf6'
+            ),
+        ]
+        for (args, kwargs), expect in cases:
+            self.assertEqual(get_cache_func_name('fn', *args, **kwargs), expect)

@@ -57,11 +57,12 @@ def formatted(f):
     return decorater
 
 
-def use_cache(time=config.CACHE_MAX_TIME):
+def use_cache(time=config.CACHE_MAX_TIME, name=None):
     def wrapper(f):
         @wraps(f)
         def decorater(*args, **kwargs):
-            cache_name = get_cache_func_name(f, *args, **kwargs)
+            fn = name if name else '.'.join([f.__module__, f.__name__])
+            cache_name = get_cache_func_name(fn, *args, **kwargs)
             results = get_cache(cache_name)
             if results is not None:
                 return results

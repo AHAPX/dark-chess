@@ -6,6 +6,7 @@ from tests.base import TestCaseBase
 import serializers
 from engine import Board
 from consts import WHITE, BLACK, KING
+from models import Move
 
 
 class TestSerializer(TestCaseBase):
@@ -22,7 +23,8 @@ class TestSerializer(TestCaseBase):
             self.assertTrue(data['rc'])
             self.assertEqual(data['data'], 'test')
             # error
-            resp = serializers.BaseSerializer('data').to_json()
+            with self.assertLogs('serializers', level='ERROR'):
+                resp = serializers.BaseSerializer('data').to_json()
             data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
             self.assertFalse(data['rc'])
@@ -77,3 +79,13 @@ class TestSerializer(TestCaseBase):
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
             }
             self.compare_dicts(data, expect)
+
+    def test_move(self):
+        with self.app.test_request_context():
+            cases = [
+                (Move(figure='N', move='b2-c3'), 'Nb2-c3'),
+                (Move(figure='k', move='e8-e7'), 'Ke8-e7'),
+                (Move(figure='K', move='0-0-0'), '0-0-0'),
+            ]
+            for move, expect in cases:
+                self.assertEqual(serializers.MoveSerializer(move).calc(), expect)
