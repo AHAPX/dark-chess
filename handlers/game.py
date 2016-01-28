@@ -2,11 +2,12 @@ from flask import request
 
 import consts
 from serializers import send_data, send_error
-from decorators import with_game, use_cache
-from cache import add_to_queue, get_from_queue, get_from_any_queue
+from decorators import with_game, use_cache, authenticated
+from cache import add_to_queue, get_from_queue, get_from_any_queue, set_cache, get_cache
 from helpers import generate_token, get_prefix
 from game import Game
 from app import app
+from models import User
 
 
 @app.route('/game/types')
@@ -22,8 +23,9 @@ def _types():
 
 
 @app.route('/game/new')
+@authenticated
 def _new_game():
-    _type = request.args.get('type', 'nolimit')
+    _type = request.args.get('type', 'no limit')
     _limit = request.args.get('limit')
     game_type = consts.TYPES_NAMES.get(_type)
     if game_type is None:
@@ -45,9 +47,22 @@ def _new_game():
     token = generate_token(True)
     result = {'game': token}
     if enemy_token:
-        game = Game.new_game(enemy_token, token, game_type, game_limit)
+        enemy_user = None
+        user_id = get_cache('user_{}'.format(enemy_token))
+        if user_id:
+            try:
+                enemy_user = User.get(pk=user_id)
+            except User.DoesNotExist:
+                pass
+        game = Game.new_game(
+            enemy_token, token, game_type, game_limit,
+            white_user=enemy_user, black_user=request.user
+        )
         result.update(game.get_info(consts.BLACK))
-    add_to_queue(token, queue_prefix)
+    else:
+        add_to_queue(token, queue_prefix)
+        if request.user:
+            set_cache('user_{}'.format(token), request.user.pk, 3600)
     return send_data(result)
 
 

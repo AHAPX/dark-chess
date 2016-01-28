@@ -3,7 +3,7 @@ from datetime import datetime
 
 from tests import TestCaseDB
 import consts
-from decorators import authenticated, with_game, formatted, use_cache
+from decorators import authenticated, with_game, formatted, use_cache, login_required
 from cache import set_cache, delete_cache, get_cache_func_name
 from models import User, Game
 from helpers import invert_color
@@ -16,22 +16,31 @@ class TestDecorators(TestCaseDB):
         func = authenticated(lambda *a, **k: 'success')
         request.json.get.return_value = '1234'
         # test decorator, token is not in cache
-        with patch('decorators.send_error') as mock:
-            mock.return_value = '_error'
-            self.assertEqual(func(), '_error')
-            mock.assert_called_once_with('not authorized')
+        self.assertEqual(func(), 'success')
+        self.assertIsNone(request.user)
+        self.assertIsNone(request.auth)
         # test decorator, token is in cache, no user
         set_cache('1234', 1)
-        with patch('decorators.send_error') as mock:
-            mock.return_value = '_error'
-            self.assertEqual(func(), '_error')
-            mock.assert_called_once_with('not authorized')
+        self.assertEqual(func(), 'success')
+        self.assertIsNone(request.user)
+        self.assertIsNone(request.auth)
         # test decorator success
         user = User.create(username='user1', password='passwd')
         set_cache('1234', user.pk)
         self.assertEqual(func(), 'success')
         self.assertEqual(request.user.pk, user.pk)
         self.assertEqual(request.auth, '1234')
+
+    @patch('decorators.request')
+    def test_login_required(self, request):
+        request.user = None
+        func = login_required(lambda *a, **k: 'success')
+        with patch('decorators.send_error') as mock:
+            mock.return_value = '_error'
+            self.assertEqual(func(), '_error')
+            mock.assert_called_once_with('not authorized')
+        request.user = User.create(username='user1', password='passwd')
+        self.assertEqual(func(), 'success')
 
     def test_with_game(self):
         func = with_game(lambda *a, **k: (a, k))

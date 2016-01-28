@@ -5,7 +5,7 @@ from validate_email import validate_email
 
 import config
 from serializers import send_data, send_message, send_error, send_success
-from decorators import authenticated, use_cache
+from decorators import authenticated, use_cache, login_required
 from models import User
 from cache import delete_cache
 from connections import send_mail_template
@@ -39,6 +39,7 @@ def _register():
 
 @app.route('/auth/verification/')
 @authenticated
+@login_required
 def _get_verification():
     try:
         token = request.user.get_verification()
@@ -75,6 +76,7 @@ def _login():
 
 @app.route('/auth/logout')
 @authenticated
+@login_required
 def _logout():
     delete_cache(request.auth)
     response = make_response(send_message('logout successfully'))

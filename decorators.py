@@ -16,7 +16,8 @@ def authenticated(f):
         token = (request.json or {}).get('auth') or \
             request.values.get('auth') or \
             request.cookies.get('auth')
-
+        request.user = None
+        request.auth = None
         if token is not None:
             user_id = get_cache(token)
             if user_id:
@@ -27,7 +28,15 @@ def authenticated(f):
                 else:
                     request.user = user
                     request.auth = token
-                    return f(*args, **kwargs)
+        return f(*args, **kwargs)
+    return decorater
+
+
+def login_required(f):
+    @wraps(f)
+    def decorater(*args, **kwargs):
+        if hasattr(request, 'user') and request.user:
+            return f(*args, **kwargs)
         return send_error('not authorized')
     return decorater
 
