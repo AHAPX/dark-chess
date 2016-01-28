@@ -2,7 +2,7 @@ import config
 from tests.base import TestCaseBase
 from helpers import (
     onBoard, pos2coors, coors2pos, invert_color, encrypt_password, generate_token,
-    with_context, get_queue_name, get_prefix
+    with_context, get_queue_name, get_prefix, get_request_arg
 )
 from consts import WHITE, BLACK
 
@@ -70,3 +70,17 @@ class TestHelpers(TestCaseBase):
     def test_get_prefix(self):
         self.assertEqual(get_prefix(123), '123-*')
         self.assertEqual(get_prefix(123, 30), '123-30')
+
+    def test_get_request_arg(self):
+        class _Request():
+            form = {}
+            json = None
+        # None value
+        request = _Request()
+        self.assertIsNone(get_request_arg(request, 'arg1'))
+        # from json
+        request.json = {'arg1': 'jsuccess'}
+        self.assertEqual(get_request_arg(request, 'arg1'), 'jsuccess')
+        # from form
+        request.form['arg1'] = 'fsuccess'
+        self.assertEqual(get_request_arg(request, 'arg1'), 'fsuccess')

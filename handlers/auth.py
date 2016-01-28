@@ -1,7 +1,6 @@
 import datetime
 
 from flask import request, make_response
-from validate_email import validate_email
 
 import config
 from serializers import send_data, send_message, send_error, send_success
@@ -10,22 +9,18 @@ from models import User
 from cache import delete_cache
 from connections import send_mail_template
 from app import app
+from helpers import get_request_arg
+from validators import RegistrationValidator, LoginValidator
 
 
 @app.route('/auth/register', methods=['POST'])
 def _register():
-    username = request.json.get('username')
-    password = request.json.get('password')
-    email = request.json.get('email')
-    if User.select().where(User.username == username).count():
-        return send_error('username is already in use')
-    if len(password) < 8:
-        return send_error('password must be at least 8 characters')
-    if email:
-        if not validate_email(email):
-            return send_error('email is not valid')
-        if User.select().where(User.email == email).count():
-            return send_error('email is already in use')
+    username = get_request_arg(request, 'username')
+    password = get_request_arg(request, 'password')
+    email = get_request_arg(request, 'email')
+    validator = RegistrationValidator(username, password, email)
+    if not validator.is_valid():
+        return send_error(validator.get_error())
     user = User.add(username, password, email)
     if email:
         token = user.get_verification()
@@ -63,15 +58,17 @@ def _verify(token):
 
 @app.route('/auth/login', methods=['POST'])
 def _login():
-    username = request.json.get('username')
-    password = request.json.get('password')
-    token = User.authenticate(username, password)
-    if token:
-        response = make_response(send_data({'auth': token}))
-        expire_date = datetime.datetime.now() + datetime.timedelta(seconds=config.SESSION_TIME)
-        response.set_cookie('auth', token, expires=expire_date)
-        return response
-    return send_error('username or password is incorrect')
+    username = get_request_arg(request, 'username')
+    password = get_request_arg(request, 'password')
+    validator = LoginValidator(username, password)
+    if validator.is_valid():
+        token = User.authenticate(username, password)
+        if token:
+            response = make_response(send_data({'auth': token}))
+            expire_date = datetime.datetime.now() + datetime.timedelta(seconds=config.SESSION_TIME)
+            response.set_cookie('auth', token, expires=expire_date)
+            return response
+    return send_error(validator.get_error())
 
 
 @app.route('/auth/logout')

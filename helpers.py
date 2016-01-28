@@ -43,6 +43,7 @@ def generate_token(short=False):
         return token[:config.TOKEN_SHORT_LENGTH]
     return token
 
+
 def with_context(data):
     context = {
         'site_url': config.SITE_URL,
@@ -57,3 +58,7 @@ def get_queue_name(prefix):
 
 def get_prefix(game_type, game_limit=None):
     return '{}-{}'.format(game_type, game_limit if game_limit is not None else '*')
+
+
+def get_request_arg(request, name):
+    return request.form.get(name) or (request.json or {}).get(name)

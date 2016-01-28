@@ -7,3 +7,4 @@ from tests.connections_t import *
 from tests.format_t import *
 from tests.decorators_t import *
 from tests.game_t import *
+from tests.handlers_t import *
