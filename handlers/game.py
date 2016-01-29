@@ -8,6 +8,8 @@ from helpers import generate_token, get_prefix
 from game import Game
 from app import app
 from models import User
+from validators import GameNewValidator, GameMoveValidator
+import errors
 
 
 @app.route('/game/types')
@@ -22,21 +24,17 @@ def _types():
     return send_data({'types': types})
 
 
-@app.route('/game/new')
+@app.route('/game/new', methods=['POST'])
 @authenticated
 def _new_game():
-    _type = request.args.get('type', 'no limit')
-    _limit = request.args.get('limit')
-    game_type = consts.TYPES_NAMES.get(_type)
-    if game_type is None:
-        return send_error('{} is not available type'.format(_type))
-    if game_type != consts.TYPE_NOLIMIT and _limit:
-        try:
-            game_limit = consts.TYPES[game_type]['periods'][_limit][1]
-        except:
-            return send_error('{} limit is not available found for {} game'.format(_limit, _type))
-    else:
-        game_limit = None
+    try:
+        validator = GameNewValidator(request)
+    except errors.ValidationError as exc:
+        return send_error(exc.message)
+    if not validator.is_valid():
+        return send_error(validator.get_error())
+    game_type = validator.cleaned_data['type']
+    game_limit = validator.cleaned_data['limit']
     queue_prefix = get_prefix(game_type, game_limit)
     if game_type == consts.TYPE_NOLIMIT or game_limit:
         enemy_token = get_from_queue(queue_prefix)
@@ -73,13 +71,18 @@ def _game_info(game):
     return send_data(game.get_info())
 
 
-@app.route('/game/<token>/move/<move>')
+@app.route('/game/<token>/move', methods=['POST'])
 @with_game
-def _game_move(game, move):
-    moves = move.split('-')
-    if len(moves) == 2:
-        return game.move(*moves)
-    return send_error('move format must be like e2-e4')
+def _game_move(game):
+    try:
+        validator = GameMoveValidator(request)
+    except errors.ValidationError as exc:
+        return send_error(exc.message)
+    if not validator.is_valid():
+        return send_error(validator.get_error())
+    coor1 = validator.cleaned_data['coor1']
+    coor2 = validator.cleaned_data['coor2']
+    return game.move(coor1, coor2)
 
 
 @app.route('/game/<token>/draw/accept')
@@ -90,7 +93,7 @@ def _draw_accept(game):
 
 @app.route('/game/<token>/draw/refuse')
 @with_game
-def _draw_refuce(game):
+def _draw_refuse(game):
     return game.draw_refuse()
 
 

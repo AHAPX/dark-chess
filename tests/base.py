@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 import inspect
 import sys
 import json
@@ -16,11 +17,13 @@ test_db = SqliteDatabase(':memory:')
 
 class TestCaseBase(unittest.TestCase):
 
-    def compare_dicts(self, data, expect):
+    def assertComprateDicts(self, data, expect):
         for k1, v1 in expect.items():
-            self.assertIn(k1, data)
-        for k2, v2 in v1.items():
-            self.assertEqual(data[k1][k2], v2)
+            if isinstance(v1, dict):
+                for k2, v2 in v1.items():
+                    self.assertEqual(data[k1][k2], v2)
+            else:
+                self.assertEqual(data[k1], v1)
         for key in data.keys():
             self.assertIn(key, expect)
 
@@ -53,6 +56,26 @@ class TestCaseWeb(TestCaseDB):
     def load_data(self, response):
         self.assertEqual(response.status_code, 200)
         return json.loads(response.data.decode())
+
+    def add_user(self, username, password, email, token='token'):
+        with patch('models.User.get_verification') as mock:
+            mock.return_value = token
+            self.client.post('/auth/register', data={
+                'username': username,
+                'password': password,
+                'email': email,
+            })
+            return username, password
+
+    def login(self, username, password):
+        user_data = {
+            'username': username,
+            'password': password,
+        }
+        resp = self.client.post('/auth/login', data=user_data)
+        data = self.load_data(resp)
+        self.client.set_cookie('localhost', 'auth', data['auth'])
+        return data['auth']
 
 
 class MockRequest(object):

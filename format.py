@@ -20,3 +20,14 @@ def format(value):
         return FORMATS.get(type(value), lambda a: a)(value)
     except:
         return value
+
+
+ARGS_FORMATS = {
+    str: lambda a: str(a),
+    float: lambda a: float(a),
+    int: lambda a: int(a),
+}
+
+
+def get_argument(value, _type):
+    return ARGS_FORMATS.get(_type, lambda a: _type(a))(value)

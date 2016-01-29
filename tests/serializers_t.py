@@ -56,7 +56,7 @@ class TestSerializer(TestCaseBase):
             self.assertEqual(resp.status_code, 200)
             self.assertTrue(data['rc'])
             expect = {
-                'rc': {}, 'b3': {}, 'c3': {}, 'c4': {}, 'd2': {}, 'd3': {},
+                'rc': True, 'b3': {}, 'c3': {}, 'c4': {}, 'd2': {}, 'd3': {},
                 'd4': {}, 'd5': {}, 'd6': {}, 'd7': {}, 'd8': {}, 'e2': {},
                 'f3': {}, 'g4': {}, 'h5': {}, 'g8': {}, 'g4': {}, 'f5': {},
                 'f7': {}, 'a1': {}, 'b1': {}, 'c1': {}, 'e1': {}, 'f1': {},
@@ -65,7 +65,7 @@ class TestSerializer(TestCaseBase):
                 'd1': {'kind': 'queen', 'color': 'white', 'position': 'd1'},
                 'h6': {'kind': 'knight', 'color': 'white', 'position': 'h6'},
             }
-            self.compare_dicts(data, expect)
+            self.assertComprateDicts(data, expect)
 
     def test_board_2(self):
         with self.app.test_request_context():
@@ -75,10 +75,10 @@ class TestSerializer(TestCaseBase):
             self.assertEqual(resp.status_code, 200)
             self.assertTrue(data['rc'])
             expect = {
-                'rc': {}, 'd8': {}, 'd7': {}, 'e7': {}, 'f7': {}, 'f8': {},
+                'rc': True, 'd8': {}, 'd7': {}, 'e7': {}, 'f7': {}, 'f8': {},
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
             }
-            self.compare_dicts(data, expect)
+            self.assertComprateDicts(data, expect)
 
     def test_move(self):
         with self.app.test_request_context():

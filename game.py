@@ -116,7 +116,7 @@ class Game(object):
             'enemy_time_left': format(self.time_left(color)),
         }
         self.send_ws(msg, consts.WS_MOVE, invert_color(color))
-        return send_success()
+        return send_data(self.get_info())
 
     def send_ws(self, msg, signal, color=consts.UNKNOWN):
         tags = []
@@ -135,7 +135,7 @@ class Game(object):
         color = self.get_color(color)
         set_cache(self._get_draw_name(color), True)
         if self.check_draw():
-            return send_message('game is over')
+            return send_message('game over')
         self.send_ws('opponent offered draw', consts.WS_DRAW_REQUEST, invert_color(color))
         return send_success()
 
@@ -155,8 +155,8 @@ class Game(object):
                 self.model.game_over(consts.END_DRAW)
                 delete_cache(name1)
                 delete_cache(name2)
-                self.send_ws('game is over', consts.WS_DRAW, consts.WHITE)
-                self.send_ws('game is over', consts.WS_DRAW, consts.BLACK)
+                self.send_ws('game over', consts.WS_DRAW, consts.WHITE)
+                self.send_ws('game over', consts.WS_DRAW, consts.BLACK)
                 return True
         return False
 

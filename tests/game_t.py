@@ -118,7 +118,7 @@ class TestGame(TestCaseDB):
         # add draw accept, game should be over
         with patch('game.send_message') as mock:
             self.game.draw_accept(BLACK)
-            mock.assert_called_once_with('game is over')
+            mock.assert_called_once_with('game over')
         # game is over
         with patch('game.send_error') as mock:
             self.game.model.date_end = datetime.now()
@@ -172,8 +172,8 @@ class TestGame(TestCaseDB):
         self.assertTrue(self.game.check_draw())
         self.assertEqual(self.game.model.end_reason, END_DRAW)
         send_ws.assert_has_calls([
-            call('game is over', WS_DRAW, WHITE),
-            call('game is over', WS_DRAW, BLACK)
+            call('game over', WS_DRAW, WHITE),
+            call('game over', WS_DRAW, BLACK)
         ])
         # check draw when game is over
         self.assertFalse(self.game.check_draw())
@@ -193,11 +193,11 @@ class TestGame(TestCaseDB):
     @patch('game.Game.send_ws')
     def test_move(self, send_ws, onMove):
         # make move successful
-        with patch('game.send_success') as mock,\
+        with patch('game.send_data') as mock,\
                 patch('game.Game.get_board') as mock1:
             mock1.return_value = 'board'
             self.game.move('e2', 'e4')
-            mock.assert_called_once_with()
+            self.assertTrue(mock.called)
             expect = {
                 'number': 1,
                 'move': 'e2-e4',

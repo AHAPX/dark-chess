@@ -1,28 +1,35 @@
 from validate_email import validate_email
 
 from models import User
-from helpers import get_request_arg
+from helpers import get_request_arg, coors2pos, onBoard
 import errors
+from format import get_argument
+import consts
 
 
 class BaseValidator(object):
     fields = {}
+    cleaned_fields = {}
 
     def __init__(self, request):
-        self.form, self._error = {}, None
-        for name, (_type, required) in self.fields.items():
+        self.form, self.cleaned_data, self._error = {}, {}, None
+        for name, params in self.fields.items():
             value = get_request_arg(request, name)
-            if required and value is None:
+            if params.get('required') and value is None:
                 raise errors.ValidationRequiredError(name)
             if value is not None:
                 try:
-                    value = _type(value)
+                    value = get_argument(value, params['type'])
                 except (TypeError, ValueError):
                     raise errors.ValidationError(name)
+            else:
+                value = params.get('default')
             self.form[name] = value
 
     def is_valid(self):
         self._error = None
+        if not self.cleaned_fields:
+            self.cleaned_data = self.form
         return True
 
     def error(self, error):
@@ -35,9 +42,9 @@ class BaseValidator(object):
 
 class RegistrationValidator(BaseValidator):
     fields = {
-        'username': (str, True),
-        'password': (str, True),
-        'email': (str, False),
+        'username': dict(type=str, required=True),
+        'password': dict(type=str, required=True),
+        'email': dict(type=str),
     }
 
     def is_valid(self):
@@ -57,6 +64,62 @@ class RegistrationValidator(BaseValidator):
 
 class LoginValidator(BaseValidator):
     fields = {
-        'username': (str, True),
-        'password': (str, True),
+        'username': dict(type=str, required=True),
+        'password': dict(type=str, required=True),
     }
+
+
+class GameNewValidator(BaseValidator):
+    fields = {
+        'type': dict(type=str, default='no limit'),
+        'limit': dict(type=str),
+    }
+    cleaned_fields = {
+        'type': dict(type=int),
+        'limit': dict(type=int),
+    }
+
+    def is_valid(self):
+        game_type = consts.TYPES_NAMES.get(self.form['type'])
+        if game_type is None:
+            return self.error('{} is not available type'.format(self.form['type']))
+        if game_type != consts.TYPE_NOLIMIT and self.form['limit']:
+            try:
+                game_limit = consts.TYPES[game_type]['periods'][self.form['limit']][1]
+            except:
+                return self.error('{} limit is not available for {} game'.format(
+                    self.form['limit'], self.form['type']
+                ))
+        else:
+            game_limit = None
+        self.cleaned_data = {
+            'type': game_type,
+            'limit': game_limit,
+        }
+        return super(GameNewValidator, self).is_valid()
+
+
+class GameMoveValidator(BaseValidator):
+    fields = {
+        'move': dict(type=str, required=True)
+    }
+    cleaned_fields = {
+        'coor1': dict(type=str),
+        'coor2': dict(type=str),
+    }
+
+    def is_valid(self):
+        coors = self.form['move'].split('-')
+        if len(coors) != 2:
+            return self.error('move format must be like e2-e4')
+        try:
+            for coor in coors:
+                if not onBoard(*coors2pos(coor)):
+                    raise ValueError(coor)
+        except ValueError:
+            return self.error('some coordinate is incorrect')
+        self.cleaned_data = {
+            'coor1': coors[0],
+            'coor2': coors[1],
+        }
+        return super(GameMoveValidator, self).is_valid()
