@@ -1,21 +1,7 @@
 from unittest.mock import patch
-import json
 
-from tests import TestCaseDB
-from handlers import app
+from tests.base import TestCaseWeb
 from cache import get_cache
-
-
-class TestCaseWeb(TestCaseDB):
-
-    def setUp(self):
-        app.config['TESTING'] = True
-        self.client = app.test_client()
-        super(TestCaseWeb, self).setUp()
-
-    def load_data(self, response):
-        self.assertEqual(response.status_code, 200)
-        return json.loads(response.data.decode())
 
 
 class TestHandlersMain(TestCaseWeb):

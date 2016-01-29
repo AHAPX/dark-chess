@@ -11,16 +11,20 @@ from connections import send_mail_template
 from app import app
 from helpers import get_request_arg
 from validators import RegistrationValidator, LoginValidator
+import errors
 
 
 @app.route('/auth/register', methods=['POST'])
 def _register():
-    username = get_request_arg(request, 'username')
-    password = get_request_arg(request, 'password')
-    email = get_request_arg(request, 'email')
-    validator = RegistrationValidator(username, password, email)
+    try:
+        validator = RegistrationValidator(request)
+    except errors.ValidationError as exc:
+        return send_error(exc.message)
     if not validator.is_valid():
         return send_error(validator.get_error())
+    username = validator.form['username']
+    password = validator.form['password']
+    email = validator.form['email']
     user = User.add(username, password, email)
     if email:
         token = user.get_verification()
@@ -58,16 +62,20 @@ def _verify(token):
 
 @app.route('/auth/login', methods=['POST'])
 def _login():
-    username = get_request_arg(request, 'username')
-    password = get_request_arg(request, 'password')
-    validator = LoginValidator(username, password)
+    try:
+        validator = LoginValidator(request)
+    except errors.ValidationError as exc:
+        return send_error(exc.message)
     if validator.is_valid():
+        username = validator.form['username']
+        password = validator.form['password']
         token = User.authenticate(username, password)
         if token:
             response = make_response(send_data({'auth': token}))
             expire_date = datetime.datetime.now() + datetime.timedelta(seconds=config.SESSION_TIME)
             response.set_cookie('auth', token, expires=expire_date)
             return response
+        return send_error('username or password is incorrect')
     return send_error(validator.get_error())
 
 

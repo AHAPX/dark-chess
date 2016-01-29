@@ -1,11 +1,25 @@
 from validate_email import validate_email
 
 from models import User
+from helpers import get_request_arg
+import errors
 
 
 class BaseValidator(object):
-    _error = None
-    form = {}
+    fields = {}
+
+    def __init__(self, request):
+        self.form, self._error = {}, None
+        for name, (_type, required) in self.fields.items():
+            value = get_request_arg(request, name)
+            if required and value is None:
+                raise errors.ValidationRequiredError(name)
+            if value is not None:
+                try:
+                    value = _type(value)
+                except (TypeError, ValueError):
+                    raise errors.ValidationError(name)
+            self.form[name] = value
 
     def is_valid(self):
         self._error = None
@@ -20,13 +34,11 @@ class BaseValidator(object):
 
 
 class RegistrationValidator(BaseValidator):
-
-    def __init__(self, username, password, email=None):
-        self.form = {
-            'username': username,
-            'password': password,
-            'email': email
-        }
+    fields = {
+        'username': (str, True),
+        'password': (str, True),
+        'email': (str, False),
+    }
 
     def is_valid(self):
         if len(self.form['username']) < 4:
@@ -44,14 +56,7 @@ class RegistrationValidator(BaseValidator):
 
 
 class LoginValidator(BaseValidator):
-
-    def __init__(self, username, password):
-        self.form = {
-            'username': username,
-            'password': password,
-        }
-
-    def is_valid(self):
-        if self.form['username'] is None or self.form['password'] is None:
-            return self.error('username or password is incorrect')
-        return super(LoginValidator, self).is_valid()
+    fields = {
+        'username': (str, True),
+        'password': (str, True),
+    }

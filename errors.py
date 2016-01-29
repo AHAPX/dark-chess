@@ -62,13 +62,18 @@ class GameNotFoundError(BaseException):
 class TooOftenRequestError(BaseArgException):
     message = 'too often requests, try again after {} seconds'
 
-    def __init__(self, seconds):
-        super(TooOftenRequestError, self).__init__(seconds)
-
 
 class VerifiedError(BaseException):
     message = 'your email is already verified'
 
 
-class VerificationRequestError(TooOftenRequestError):
+class VerificationRequestError(BaseArgException):
     message = 'you must wait {} seconds to get new verification code'
+
+
+class ValidationError(BaseArgException):
+    message = '{} is not valid'
+
+
+class ValidationRequiredError(ValidationError):
+    message = '{} is required'
