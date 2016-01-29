@@ -11,8 +11,23 @@ Chess with fog of war ([game rules](https://en.wikipedia.org/wiki/dark_chess))
 
 ## Installation
 ```bash
+$ git clone https://github.com/AHAPX/dark-chess
+$ cd dark-chess
 $ pip install -r requirements.txt
 $ cp src/config_local.py.sample src/config_local.py
 ```
 
-## Running
+## Usage
+```bash
+$ cd dark-chess/src
+$ python main.py
+```
+
+## Testing
+```bash
+$ cd dark-chess
+$ python -m unittest tests
+```
+
+## Documentation
+[api documentation](docs/api.md)
