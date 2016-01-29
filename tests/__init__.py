@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, '/home/anarchy/dark-chess/src')
+
 from tests.cache_t import *
 from tests.connections_t import *
 from tests.decorators_t import *
