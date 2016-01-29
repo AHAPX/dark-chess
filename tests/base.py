@@ -6,9 +6,10 @@ import json
 
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase, Model
+from fakeredis import FakeStrictRedis
 
+import cache
 from models import User, Game, Move
-from cache import redis
 from handlers import app
 
 
@@ -30,8 +31,12 @@ class TestCaseBase(unittest.TestCase):
 
 class TestCaseCache(TestCaseBase):
 
+    @classmethod
+    def setUpClass(cls):
+        cache.redis = FakeStrictRedis()
+
     def setUp(self):
-        redis.flushdb()
+        cache.redis.flushdb()
         super(TestCaseCache, self).setUp()
 
 
