@@ -306,12 +306,23 @@ class TestHandlersGame(TestCaseWeb):
         expect = {'rc': True, 'message': {}}
         self.assertComprateDicts(data, expect)
 
-    def test_draw_refuse(self):
+    def test_draw_refuse_1(self):
         user_token1, user_token2 = self.new_game()
-        # draw request and refuse after, game is not over
+        # draw request and refuse after by second player, game is not over
         resp = self.client.get('/game/{}/draw/accept'.format(user_token1))
         self.assertEqual(self.load_data(resp), {'rc': True})
         resp = self.client.get('/game/{}/draw/refuse'.format(user_token2))
+        self.assertEqual(self.load_data(resp), {'rc': True})
+        # draw request from second player, game is not over
+        resp = self.client.get('/game/{}/draw/accept'.format(user_token2))
+        self.assertEqual(self.load_data(resp), {'rc': True})
+
+    def test_draw_refuse_2(self):
+        user_token1, user_token2 = self.new_game()
+        # draw request and refuse after by first player, game is not over
+        resp = self.client.get('/game/{}/draw/accept'.format(user_token1))
+        self.assertEqual(self.load_data(resp), {'rc': True})
+        resp = self.client.get('/game/{}/draw/refuse'.format(user_token1))
         self.assertEqual(self.load_data(resp), {'rc': True})
         # draw request from second player, game is not over
         resp = self.client.get('/game/{}/draw/accept'.format(user_token2))

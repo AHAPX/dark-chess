@@ -1,7 +1,7 @@
 from unittest.mock import patch
 from datetime import datetime
 
-from tests import TestCaseDB
+from tests.base import TestCaseDB
 import consts
 from decorators import authenticated, with_game, formatted, use_cache, login_required
 from cache import set_cache, delete_cache, get_cache_func_name

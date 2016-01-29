@@ -1,7 +1,7 @@
 from unittest.mock import patch, call
 from datetime import datetime
 
-from tests import TestCaseDB
+from tests.base import TestCaseDB
 from consts import (
     WHITE, BLACK, TYPE_NOLIMIT, KING,
     WS_START, WS_MOVE, WS_DRAW, WS_LOSE, WS_WIN, WS_DRAW_REQUEST,
@@ -197,7 +197,7 @@ class TestGame(TestCaseDB):
                 patch('game.Game.get_board') as mock1:
             mock1.return_value = 'board'
             self.game.move('e2', 'e4')
-            self.assertTrue(mock.called)
+            mock.assert_called_once()
             expect = {
                 'number': 1,
                 'move': 'e2-e4',

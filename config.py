@@ -21,6 +21,7 @@ CACHE_DB = 0
 WS_HOST = '0.0.0.0'
 WS_PORT = 9998
 WS_CHANNEL = 'ws-channel'
+WS_DB = 1
 
 # times and periods
 VERIFICATION_PERIOD = 10 * 60

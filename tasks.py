@@ -30,5 +30,5 @@ def send_mail(msg, recipients, sender=None):
 
 @celery.task
 def send_ws(msg):
-    redis = StrictRedis(config.CACHE_HOST, config.CACHE_PORT)
+    redis = StrictRedis(config.CACHE_HOST, config.CACHE_PORT, config.WS_DB)
     redis.publish(config.WS_CHANNEL, msg)
