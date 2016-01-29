@@ -116,6 +116,7 @@ def redis_handler(server):
     connection = yield from asyncio_redis.Connection.create(
         host=config.CACHE_HOST,
         port=config.CACHE_PORT,
+        db=config.WS_DB
     )
     subscriber = yield from connection.start_subscribe()
     yield from subscriber.subscribe([config.WS_CHANNEL])

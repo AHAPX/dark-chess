@@ -4,6 +4,7 @@ from tests.base import TestCaseWeb
 from cache import get_cache
 from models import Game, User
 import consts
+import config
 
 
 class TestHandlersMain(TestCaseWeb):
@@ -13,6 +14,22 @@ class TestHandlersMain(TestCaseWeb):
         data = self.load_data(resp)
         self.assertTrue(data['rc'])
         self.assertIn('message', data)
+
+    @patch('handlers.main.send_message')
+    def test_server_error_1(self, send_message):
+        config.DEBUG = False
+        send_message.side_effect = ValueError('value_err')
+        with self.assertLogs('handlers.main', level='CRITICAL'):
+            resp = self.client.get('/')
+            self.assertEqual(resp.status_code, 500)
+
+    @patch('handlers.main.send_message')
+    def test_server_error_2(self, send_message):
+        config.DEBUG = True
+        send_message.side_effect = ValueError('value_err')
+        with self.assertLogs('handlers.main', level='CRITICAL'),\
+                self.assertRaises(ValueError, msg='value_err'):
+            self.client.get('/')
 
 
 class TestHandlersAuth(TestCaseWeb):
