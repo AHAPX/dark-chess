@@ -38,8 +38,8 @@ class Game(object):
         )
         set_cache(white_token, (game.model.pk, consts.WHITE, black_token))
         set_cache(black_token, (game.model.pk, consts.BLACK, white_token))
-        game.send_ws(game.get_board(consts.WHITE), consts.WS_START, consts.WHITE)
-        game.send_ws(game.get_board(consts.BLACK), consts.WS_START, consts.BLACK)
+        game.send_ws(game.get_info(consts.WHITE), consts.WS_START, consts.WHITE)
+        game.send_ws(game.get_info(consts.BLACK), consts.WS_START, consts.BLACK)
         return game
 
     @classmethod
@@ -109,13 +109,11 @@ class Game(object):
         if game_over:
             self.send_ws('you lose', consts.WS_LOSE, invert_color(color))
             return send_message('you win')
-        msg = {
+        msg = self.get_info(invert_color(color))
+        msg.update({
             'number': num,
             'move': move,
-            'board': self.get_board(invert_color(color)),
-            'time_left': format(self.time_left(invert_color(color))),
-            'enemy_time_left': format(self.time_left(color)),
-        }
+        })
         self.send_ws(msg, consts.WS_MOVE, invert_color(color))
         return send_data(self.get_info())
 
@@ -165,6 +163,7 @@ class Game(object):
         if self.model.ended:
             return send_error('game is over')
         self.model.game_over(consts.END_RESIGN)
+        self.send_ws('you win', consts.WS_WIN, invert_color(self.get_color(color)))
         return send_success()
 
     def moves(self):

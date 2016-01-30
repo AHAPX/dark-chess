@@ -16,16 +16,16 @@ from format import format
 
 class TestGameInit(TestCaseDB):
 
-    @patch('game.Game.get_board')
-    def test_new_game(self, get_board):
-        get_board.return_value = 'board'
+    @patch('game.Game.get_info')
+    def test_new_game(self, get_info):
+        get_info.return_value = 'info'
         with patch('game.Game.send_ws') as mock:
             game = Game.new_game('1234', 'qwer', TYPE_NOLIMIT, None)
             self.assertIsInstance(game, Game)
             self.assertEqual(get_cache('1234'), (game.model.pk, WHITE, 'qwer'))
             self.assertEqual(get_cache('qwer'), (game.model.pk, BLACK, '1234'))
             mock.assert_has_calls([
-                call('board', WS_START, WHITE), call('board', WS_START, BLACK)
+                call('info', WS_START, WHITE), call('info', WS_START, BLACK)
             ])
 
     def test_load_game(self):
@@ -179,16 +179,20 @@ class TestGame(TestCaseDB):
         # check draw when game is over
         self.assertFalse(self.game.check_draw())
 
-    def test_resign(self):
+    @patch('game.Game.send_ws')
+    def test_resign(self, send_ws):
         # resign game successfully
         with patch('game.send_success') as mock:
             self.game.resign()
             self.assertEqual(self.game.model.end_reason, END_RESIGN)
             mock.assert_called_once_with()
+            send_ws.assert_called_once_with('you win', WS_WIN, BLACK)
+        send_ws.reset_mock()
         # try to resign when game is over
         with patch('game.send_error') as mock:
             self.game.resign()
             mock.assert_called_once_with('game is over')
+            self.assertFalse(send_ws.called)
 
     @patch('game.Game.onMove')
     @patch('game.Game.send_ws')
@@ -205,6 +209,9 @@ class TestGame(TestCaseDB):
                 'board': 'board',
                 'time_left': None,
                 'enemy_time_left': None,
+                'started_at': format(self.game.model.date_created),
+                'ended_at': None,
+                'next_turn': 'black'
             }
             onMove.assert_called_once_with()
             send_ws.assert_called_once_with(expect, WS_MOVE, BLACK)
