@@ -103,6 +103,7 @@ def server_handler(server, websocket, path):
             message = yield from websocket.recv()
             if message == 'ping':
                 logger.debug('ping from {}'.format(client.name))
+                client.send('pong')
             else:
                 logger.info('received: {}'.format(message))
             if message is None:
