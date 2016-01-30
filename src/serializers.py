@@ -73,7 +73,7 @@ class GameSerializer(BaseSerializer):
 class MoveSerializer(BaseSerializer):
 
     def calc(self):
-        if self._model.move in ('0-0', '0-0-0'):
+        if self._model.move in ('0-0', '0-0-0') or self._model.figure in ('p', 'P'):
             figure = ''
         else:
             figure = self._model.figure.upper()

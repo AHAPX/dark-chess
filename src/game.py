@@ -81,6 +81,7 @@ class Game(object):
             'enemy_time_left': self.time_left(invert_color(color)),
             'started_at': self.model.date_created,
             'ended_at': self.model.date_end,
+            'next_turn': consts.COLORS[self.game.current_player]
         }
 
     def time_left(self, color=None):

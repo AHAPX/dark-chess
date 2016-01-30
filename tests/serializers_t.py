@@ -86,6 +86,7 @@ class TestSerializer(TestCaseBase):
                 (Move(figure='N', move='b2-c3'), 'Nb2-c3'),
                 (Move(figure='k', move='e8-e7'), 'Ke8-e7'),
                 (Move(figure='K', move='0-0-0'), '0-0-0'),
+                (Move(figure='P', move='e2-e4'), 'e2-e4'),
             ]
             for move, expect in cases:
                 self.assertEqual(serializers.MoveSerializer(move).calc(), expect)

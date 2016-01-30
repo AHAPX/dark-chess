@@ -213,8 +213,8 @@ class TestHandlersGame(TestCaseWeb):
         data = self.load_data(resp)
         user2_token = data['game']
         expect = {
-            'rc': True, 'game': {}, 'started_at': {}, 'ended_at': None,
-            'board': {}, 'time_left': {}, 'enemy_time_left': {}
+            'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {}, 
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
         }
         self.assertComprateDicts(data, expect)
         # check game and cache
@@ -241,8 +241,8 @@ class TestHandlersGame(TestCaseWeb):
         resp = self.client.post('/game/new', data={'type': 'slow'})
         data = self.load_data(resp)
         expect = {
-            'rc': True, 'game': {}, 'started_at': {}, 'ended_at': None,
-            'board': {}, 'time_left': {}, 'enemy_time_left': {}
+            'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {}, 
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
         }
         self.assertComprateDicts(data, expect)
 
@@ -253,8 +253,8 @@ class TestHandlersGame(TestCaseWeb):
         resp = self.client.post('/game/new', data=game_data)
         data = self.load_data(resp)
         expect = {
-            'rc': True, 'game': {}, 'started_at': {}, 'ended_at': None,
-            'board': {}, 'time_left': {}, 'enemy_time_left': {}
+            'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {}, 
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
         }
         self.assertComprateDicts(data, expect)
 
@@ -273,7 +273,7 @@ class TestHandlersGame(TestCaseWeb):
         data = self.load_data(resp)
         expect = {
             'rc': True, 'started_at': {}, 'ended_at': None, 'board': {},
-            'time_left': {}, 'enemy_time_left': {}
+            'time_left': {}, 'enemy_time_left': {}, 'next_turn': 'white',
         }
         self.assertComprateDicts(data, expect)
         # test second token
@@ -281,7 +281,7 @@ class TestHandlersGame(TestCaseWeb):
         data = self.load_data(resp)
         expect = {
             'rc': True, 'started_at': {}, 'ended_at': None, 'board': {},
-            'time_left': {}, 'enemy_time_left': {}
+            'time_left': {}, 'enemy_time_left': {}, 'next_turn': 'white',
         }
         self.assertComprateDicts(data, expect)
 
@@ -309,7 +309,7 @@ class TestHandlersGame(TestCaseWeb):
         data = self.load_data(resp)
         expect = {
             'rc': True, 'started_at': {}, 'ended_at': None, 'board': {},
-            'time_left': {}, 'enemy_time_left': {}
+            'time_left': {}, 'enemy_time_left': {}, 'next_turn': 'black',
         }
         self.assertComprateDicts(data, expect)
 

@@ -85,6 +85,7 @@ class TestGame(TestCaseDB):
             'enemy_time_left': 12.6,
             'started_at': format(self.game.model.date_created),
             'ended_at': None,
+            'next_turn': 'white',
         }
         self.assertEqual(self.game.get_info(), expect)
         get_board.assert_called_once_with(WHITE)
