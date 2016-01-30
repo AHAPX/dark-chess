@@ -2,6 +2,9 @@
 
 ## Description
 Chess with fog of war ([game rules](https://en.wikipedia.org/wiki/dark_chess))
+There are two servers:
+- app.py - web backend of game, interface is [REST](http://rest.elkstein.org/).
+- websocket.py - websocket server, which sends game events as opponent moves to client.
 
 ## Requirements
 - [python 3.4+](https://www.python.org/download/releases/3.4.0/)
@@ -31,4 +34,4 @@ $ python -m unittest tests
 ```
 
 ## Documentation
-[api documentation](https://github.com/AHAPX/dark-chess/wiki/api)
+https://github.com/AHAPX/dark-chess/wiki/
