@@ -22,7 +22,7 @@ class Client():
         self._socket = socket
 
     def send(self, message):
-        if self._socket and self._socket.open:
+        if self.is_active():
             if not isinstance(message, str):
                 try:
                     message = json.dumps(message)
@@ -39,6 +39,7 @@ class Client():
     def is_tag(self, tag):
         return tag in self._tags
 
+    @property
     def name(self):
         return ', '.join(self._tags)
 
@@ -67,10 +68,10 @@ class Clients():
 
 
 class WebSocketServer():
-    clients = Clients()
     server_handler, broker_handler = None, None
 
     def __init__(self, server_handler, broker_handler):
+        self.clients = Clients()
         self.server_handler = server_handler
         self.broker_handler = broker_handler
 
@@ -101,7 +102,7 @@ def server_handler(server, websocket, path):
         try:
             message = yield from websocket.recv()
             if message == 'ping':
-                logger.debug('ping from {}'.format(client.name()))
+                logger.debug('ping from {}'.format(client.name))
             else:
                 logger.info('received: {}'.format(message))
             if message is None:

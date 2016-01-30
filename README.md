@@ -4,7 +4,7 @@
 Chess with fog of war ([game rules](https://en.wikipedia.org/wiki/dark_chess))
 
 ## Requirements
-- [python 3.4](https://www.python.org/download/releases/3.4.0/)
+- [python 3.4+](https://www.python.org/download/releases/3.4.0/)
 - [redis](http://redis.io/download)
 - [celery](http://www.celeryproject.org/install/)
 - [peewee compatible DBMS server](http://docs.peewee-orm.com/en/latest/peewee/database.html#vendor-specific-parameters)
@@ -21,6 +21,7 @@ $ cp src/config_local.py.sample src/config_local.py
 ```bash
 $ cd dark-chess/src
 $ python main.py
+$ python websocket.py
 ```
 
 ## Testing
@@ -30,4 +31,4 @@ $ python -m unittest tests
 ```
 
 ## Documentation
-[api documentation](docs/api.md)
+[api documentation](https://github.com/AHAPX/dark-chess/wiki/api)
