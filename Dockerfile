@@ -7,6 +7,8 @@ RUN git clone https://github.com/AHAPX/dark-chess.git /dark-chess
 RUN pip install -U pip
 RUN pip install -r /dark-chess/requirements.txt
 
+VOLUME /dark-chess/src/
+WORKDIR /dark-chess/src/
 EXPOSE 38599
 
-CMD cd /dark-chess/src && python main.py
+CMD python main.py

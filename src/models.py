@@ -167,3 +167,4 @@ if __name__ == '__main__':
     config.DB.create_tables([User])
     config.DB.create_tables([Game])
     config.DB.create_tables([Move])
+    print('Tables created')
