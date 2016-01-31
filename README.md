@@ -7,10 +7,11 @@ There are two servers:
 - websocket.py - websocket server, which sends game events as opponent moves to client.
 
 ## Requirements
-- [python 3.4+](https://www.python.org/download/releases/3.4.0/)
+- [python 3.3+](https://www.python.org/download/releases/3.3.0/)
 - [redis](http://redis.io/download)
 - [celery](http://www.celeryproject.org/install/)
 - [peewee compatible DBMS server](http://docs.peewee-orm.com/en/latest/peewee/database.html#vendor-specific-parameters)
+- [websocket](https://github.com/AHAPX/websocket) - not required, but recommended
 
 ## Installation
 ```bash
@@ -24,7 +25,6 @@ $ cp src/config_local.py.sample src/config_local.py
 ```bash
 $ cd dark-chess/src
 $ python main.py
-$ python websocket.py
 ```
 
 ## Testing

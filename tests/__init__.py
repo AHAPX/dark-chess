@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '/home/anarchy/dark-chess/src')
+sys.path.insert(0, 'src')
 
 from tests.cache_t import *
 from tests.connections_t import *
@@ -13,4 +13,3 @@ from tests.models_t import *
 from tests.serializers_t import *
 from tests.tasks_t import *
 from tests.validators_t import *
-from tests.websocket_t import *

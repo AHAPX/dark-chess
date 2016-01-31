@@ -12,8 +12,6 @@ CACHE_PORT = 6379
 CACHE_DB = 0
 
 # custom websocket config
-WS_HOST = '0.0.0.0'
-WS_PORT = 9998
 WS_CHANNEL = 'ws-channel'
 WS_DB = 1
 
