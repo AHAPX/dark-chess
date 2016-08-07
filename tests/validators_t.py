@@ -1,7 +1,7 @@
 from tests.base import TestCaseDB, MockRequest
 from validators import (
     BaseValidator, RegistrationValidator, LoginValidator, GameNewValidator,
-    GameMoveValidator
+    GameMoveValidator, ResetValidator, RecoverValidator
 )
 from models import User
 import errors
@@ -63,6 +63,21 @@ class TestValidators(TestCaseDB):
         self.assertValidations(
             RegistrationValidator, ('username', 'password', 'email'), cases
         )
+
+    def test_reset(self):
+        User.create(username='user1', password='password', email='u1@fakemail')
+        cases = [
+            (('u1',), False, 'not valid', None),
+            (('u1@fakemail',), True, None, {'email': 'u1@fakemail'}),
+        ]
+        self.assertValidations(ResetValidator, ('email',), cases)
+
+    def test_recover(self):
+        cases = [
+            (('pass',), False, 'password', None),
+            (('password',), True, None, {'password': 'password'}),
+        ]
+        self.assertValidations(RecoverValidator, ('password',), cases)
 
     def test_login(self):
         cases = [

@@ -22,6 +22,7 @@ class User(BaseModel):
     date_created = peewee.DateTimeField(default=datetime.now)
     date_verified = peewee.DateTimeField(null=True)
     date_verification_token = peewee.DateTimeField(null=True)
+    date_last_reset = peewee.DateTimeField(null=True)
 
     @classmethod
     def add(cls, username, password, email=None):
@@ -41,7 +42,10 @@ class User(BaseModel):
     def verify_email(cls, token):
         user_id = get_cache(token)
         if user_id:
-            user = cls.get(pk=user_id)
+            try:
+                user = cls.get(pk=user_id)
+            except cls.DoesNotExist:
+                return False
             user.verify()
             delete_cache(token)
             return user
@@ -61,6 +65,33 @@ class User(BaseModel):
         self.date_verification_token = datetime.now()
         self.save()
         return token
+
+    def get_reset(self):
+        if not self.email:
+            raise AttributeError('your email is not defined')
+        if self.date_last_reset:
+            seconds = (datetime.now() - self.date_last_reset).total_seconds()
+            if seconds < config.RESET_PERIOD:
+                raise errors.ResetRequestError(config.RESET_PERIOD - int(seconds))
+        token = generate_token()
+        set_cache(token, self.pk, config.RESET_TIME)
+        self.date_last_reset = datetime.now()
+        self.save()
+        return token
+
+    @classmethod
+    def recover(cls, token, password):
+        user_id = get_cache(token)
+        if user_id:
+            try:
+                user = cls.get(pk=user_id)
+            except cls.DoesNotExist:
+                return False
+            user.password = encrypt_password(password)
+            user.save()
+            delete_cache(token)
+            return user
+        return False
 
     def verify(self):
         self.date_verified = datetime.now()

@@ -161,6 +161,49 @@ class TestHandlersAuth(TestCaseWeb):
         resp = self.client.get('/auth/verification/token')
         self.assertTrue(self.load_data(resp)['rc'])
 
+    def test_reset_1(self):
+        self.add_user('user1', 'password', 'user1@fakemail')
+        resp = self.client.post('/auth/reset', data={'email': 'user1'})
+        data = self.load_data(resp)
+        self.assertFalse(data['rc'])
+        self.assertIn('error', data)
+
+    def test_reset_2(self):
+        self.add_user('user1', 'password', 'user1@fakemail')
+        resp = self.client.post('/auth/reset', data={'email': 'user2@fakemail'})
+        data = self.load_data(resp)
+        self.assertFalse(data['rc'])
+        self.assertIn('error', data)
+
+    def test_recover_1(self):
+        self.add_user('user1', 'passwd', 'user1@fakemail')
+        resp = self.client.post('/auth/recover/token', data={'password': 'pass'})
+        data = self.load_data(resp)
+        self.assertFalse(data['rc'])
+        self.assertIn('error', data)
+
+    def test_recover_2(self):
+        self.add_user('user1', 'passwd', 'user1@fakemail')
+        resp = self.client.post('/auth/recover/token', data={'password': 'password'})
+        data = self.load_data(resp)
+        self.assertFalse(data['rc'])
+        self.assertIn('error', data)
+
+    def test_reset_and_recover(self):
+        self.add_user('user1', 'password', 'user1@fakemail')
+        with patch('handlers.auth.send_mail_template') as mock,\
+                patch('models.generate_token') as mock1:
+            mock1.return_value = 'token'
+            resp = self.client.post('/auth/reset', data={'email': 'user1@fakemail'})
+            mock.assert_called_once_with('reset', ['user1@fakemail'], data={
+                'username': 'user1',
+                'token': 'token',
+            })
+            self.assertTrue(self.load_data(resp)['rc'])
+        resp = self.client.post('/auth/recover/token', data={'password': 'password'})
+        self.assertTrue(self.load_data(resp)['rc'])
+        self.assertTrue(User.authenticate('user1', 'password'))
+
 
 class TestHandlersGame(TestCaseWeb):
 

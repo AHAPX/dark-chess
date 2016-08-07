@@ -77,3 +77,7 @@ class ValidationError(BaseArgException):
 
 class ValidationRequiredError(ValidationError):
     message = '{} is required'
+
+
+class ResetRequestError(BaseArgException):
+    message = 'you must wait {} seconds to get new reset code'

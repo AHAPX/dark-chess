@@ -10,12 +10,12 @@ from cache import delete_cache
 from connections import send_mail_template
 from app import app
 from helpers import get_request_arg
-from validators import RegistrationValidator, LoginValidator
+from validators import RegistrationValidator, LoginValidator, ResetValidator, RecoverValidator
 import errors
 
 
 @app.route('/auth/register', methods=['POST'])
-def _register():
+def register():
     try:
         validator = RegistrationValidator(request)
     except errors.ValidationError as exc:
@@ -39,7 +39,7 @@ def _register():
 @app.route('/auth/verification/')
 @authenticated
 @login_required
-def _get_verification():
+def get_verification():
     try:
         token = request.user.get_verification()
     except Exception as exc:
@@ -54,14 +54,49 @@ def _get_verification():
 
 @app.route('/auth/verification/<token>')
 @use_cache(60)
-def _verify(token):
+def verify(token):
     if User.verify_email(token):
         return send_success()
     return send_error('token not found')
 
 
+@app.route('/auth/reset', methods=['POST'])
+def reset():
+    try:
+        validator = ResetValidator(request)
+    except errors.ValidationError as exc:
+        return send_error(exc.message)
+    if validator.is_valid():
+        try:
+            user = User.get(User.email == validator.form['email'])
+        except User.DoesNotExist:
+            return send_error('email not found')
+        else:
+            token = user.get_reset()
+            data = {
+                'username': user.username,
+                'token': token,
+            }
+            send_mail_template('reset', [user.email], data=data)
+        return send_success()
+    return send_error(validator.get_error())
+
+
+@app.route('/auth/recover/<token>', methods=['POST'])
+def recover(token):
+    try:
+        validator = RecoverValidator(request)
+    except errors.ValidationError as exc:
+        return send_error(exc.message)
+    if validator.is_valid():
+        if User.recover(token, validator.form['password']):
+            return send_success()
+        return send_error('token not found')
+    return send_error(validator.get_error())
+
+
 @app.route('/auth/login', methods=['POST'])
-def _login():
+def login():
     try:
         validator = LoginValidator(request)
     except errors.ValidationError as exc:
@@ -82,7 +117,7 @@ def _login():
 @app.route('/auth/logout')
 @authenticated
 @login_required
-def _logout():
+def logout():
     delete_cache(request.auth)
     response = make_response(send_message('logout successfully'))
     response.set_cookie('auth', expires=0)

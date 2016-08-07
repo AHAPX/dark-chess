@@ -62,6 +62,28 @@ class RegistrationValidator(BaseValidator):
         return super(RegistrationValidator, self).is_valid()
 
 
+class ResetValidator(BaseValidator):
+    fields = {
+        'email': dict(type=str, required=True),
+    }
+
+    def is_valid(self):
+        if not validate_email(self.form['email']):
+            return self.error('email is not valid')
+        return super(ResetValidator, self).is_valid()
+
+
+class RecoverValidator(BaseValidator):
+    fields = {
+        'password': dict(type=str, required=True),
+    }
+
+    def is_valid(self):
+        if len(self.form['password']) < 8:
+            return self.error('password must be at least 8 characters')
+        return super(RecoverValidator, self).is_valid()
+
+
 class LoginValidator(BaseValidator):
     fields = {
         'username': dict(type=str, required=True),

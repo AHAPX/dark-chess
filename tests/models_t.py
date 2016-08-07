@@ -79,6 +79,20 @@ class TestModels(TestCaseDB):
         with self.assertRaises(errors.VerifiedError):
             user.get_verification()
 
+    def test_reset(self):
+        # add user and check it
+        user = User.add('user1', 'passwd', 'u1@fakemail')
+        self.assertTrue(User.authenticate('user1', 'passwd'))
+        self.assertFalse(User.authenticate('user1', 'newpasswd'))
+        # get reset token
+        token = user.get_reset()
+        # set new password and check it
+        self.assertEqual(User.recover(token, 'newpasswd'), user)
+        self.assertTrue(User.authenticate('user1', 'newpasswd'))
+        # try set again, should be error
+        self.assertFalse(User.recover(token, 'newpasswd1'))
+        self.assertFalse(User.authenticate('user1', 'newpasswd1'))
+
     def test_game_over_1(self):
         # add game and check it
         game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')

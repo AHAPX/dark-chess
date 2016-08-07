@@ -256,7 +256,10 @@ class TestGame(TestCaseDB):
             mock1.side_effect = error
             self.game.move('e7', 'e5', BLACK)
             mock.assert_called_once_with('you win')
-            send_ws.assert_called_once_with('you lose', WS_LOSE, WHITE)
+            send_ws.assert_has_calls([
+                call({'number': 2, 'move': 'e7-e5'}, WS_MOVE, WHITE),
+                call('you lose', WS_LOSE, WHITE),
+            ])
             onMove.assert_called_once_with()
 
     @patch('game.get_cache_func_name')
