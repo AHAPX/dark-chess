@@ -7,7 +7,7 @@ from serializers import send_data, send_message, send_error, send_success
 from decorators import authenticated, use_cache, login_required
 from models import User
 from cache import delete_cache
-from connections import send_mail_template
+from connections import send_mail_template, send_ws
 from helpers import get_request_arg
 from validators import RegistrationValidator, LoginValidator, ResetValidator, RecoverValidator
 import errors

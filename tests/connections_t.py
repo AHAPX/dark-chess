@@ -1,44 +1,37 @@
 from unittest.mock import patch
 import json
 
-import config
 from tests.base import TestCaseBase
-from connections import fill_msg, send_mail, send_mail_template, send_ws
+from connections import check_email, send_mail, send_mail_template, send_ws
 from app import app
 
 
 class TestConnections(TestCaseBase):
 
-    def test_fill_msg(self):
-        expect_1 = {
-            'Subject': '{}subj'.format(config.MAIL_SUBJECT_PREFIX),
-            'From': config.DEFAULT_MAIL_SENDER,
-            'To': 'user1@mail',
-            'Cc': ['user2@mail'],
-        }
-        self.assertEqual(fill_msg({}, 'subj', ['user1@mail', 'user2@mail']), expect_1)
-        expect_2 = {
-            'Subject': '{}subj'.format(config.MAIL_SUBJECT_PREFIX),
-            'From': 'sender@mail',
-            'To': 'user1@mail',
-        }
-        self.assertEqual(fill_msg({}, 'subj', ['user1@mail'], 'sender@mail'), expect_2)
+    def test_check_email(self):
+        self.assertEqual(check_email('user1@mail'), ['user1@mail'])
+        self.assertEqual(check_email(['user1@mail']), ['user1@mail'])
+        with self.assertRaises(ValueError):
+            check_email(123)
 
-    @patch('tasks.send_mail.delay')
-    def test_send_mail(self, delay):
-        send_mail('subj', 'body', ['user1@mail'])
-        delay.assert_called_once()
+    @patch('connections.json.dumps')
+    @patch('connections.StrictRedis.publish')
+    def test_send_mail(self, publish, dumps):
+        dumps.return_value = 'SMTP_MSG'
+        send_mail('user1@mail', 'subj', 'body', 'html', 'user2@mail')
+        publish.assert_called_once_with(app.config['SMTP_BROKER_CHANNEL'], 'SMTP_MSG')
 
     @patch('connections.render_template')
-    @patch('tasks.send_mail.delay')
-    def test_send_mail_template(self, delay, render_template):
+    @patch('connections.send_mail')
+    def test_send_mail_template(self, send_mail, render_template):
         with app.test_request_context():
             send_mail_template('registration', ['user1@mail'])
-        delay.assert_called_once()
+        send_mail.assert_called_once()
         self.assertEqual(render_template.call_count, 3)
 
-    @patch('tasks.send_ws.delay')
-    def test_send_ws(self, delay):
+    @patch('connections.json.dumps')
+    @patch('connections.StrictRedis.publish')
+    def test_send_ws(self, publish, dumps):
+        dumps.return_value = 'WS_MSG'
         send_ws('test', 'sig', 'tag')
-        msg = {'message': {'message': 'test', 'signal': 'sig'}, 'tags': ['tag']}
-        delay.assert_called_once_with(json.dumps(msg))
+        publish.assert_called_once_with(app.config['WS_BROKER_CHANNEL'], 'WS_MSG')

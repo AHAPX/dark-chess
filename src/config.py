@@ -18,8 +18,16 @@ CACHE_PORT = 6379
 CACHE_DB = 0
 
 # websocket config
-WS_CHANNEL = 'ws-channel'
-WS_DB = 1
+WS_BROKER_HOST = CACHE_HOST
+WS_BROKER_PORT = CACHE_PORT
+WS_BROKER_CHANNEL = 'ws-channel'
+WS_BROKER_DB = 1
+
+# smtp config
+SMTP_BROKER_HOST = CACHE_HOST
+SMTP_BROKER_PORT = CACHE_PORT
+SMTP_BROKER_CHANNEL = 'smtp-channel'
+SMTP_BROKER_DB = 1
 
 # times and periods
 VERIFICATION_PERIOD = 10 * 60
@@ -32,20 +40,6 @@ RESET_TIME = 30 * 60
 # password and tokens config
 PASSWORD_SALT = ''
 TOKEN_SHORT_LENGTH = 10
-
-# email config
-MAIL_SERVER = 'localhost'
-MAIL_PORT = 25
-MAIL_USE_TLS = False
-MAIL_USE_SSL = False
-MAIL_USERNAME = None
-MAIL_PASSWORD = None
-DEFAULT_MAIL_SENDER = 'info@dark-chess'
-MAIL_SUBJECT_PREFIX = 'dask-chess: '
-
-# celery config
-CELERY_BROKER_URL = 'redis://localhost:6379/1'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
 
 # game config
 GAME_QUEUE_NAME = 'players_queue'

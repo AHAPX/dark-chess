@@ -9,9 +9,9 @@ There are two servers:
 ## Requirements
 - [python 3.3+](https://www.python.org/download/releases/3.3.0/)
 - [redis](http://redis.io/download)
-- [celery](http://www.celeryproject.org/install/)
 - [peewee compatible DBMS server](http://docs.peewee-orm.com/en/latest/peewee/database.html#vendor-specific-parameters)
 - [websocket](https://github.com/AHAPX/websocket) - not required, but recommended
+- [smtpush](https://github.com/AHAPX/smtpush) - not required, but recommended
 
 ## Installation
 ```bash

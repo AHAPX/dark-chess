@@ -12,14 +12,18 @@ CACHE_PORT = 6379
 CACHE_DB = 0
 
 # custom websocket config
-WS_CHANNEL = 'ws-channel'
-WS_DB = 1
+WS_BROKER_HOST = CACHE_HOST
+WS_BROKER_PORT = CACHE_PORT
+WS_BROKER_CHANNEL = 'dc.ws'
+WS_BROKER_DB = 1
+
+# custom smtp config
+SMTP_BROKER_HOST = CACHE_HOST
+SMTP_BROKER_PORT = CACHE_PORT
+SMTP_BROKER_CHANNEL = 'dc.stmp'
+SMTP_BROKER_DB = 1
 
 # custom email config
 MAIL_SERVER = 'localhost'
 MAIL_PORT = 1025
 DEFAULT_MAIL_SENDER = 'info@dark-chess'
-
-# custom celery config
-CELERY_BROKER_URL = 'redis://localhost:6379/1'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
