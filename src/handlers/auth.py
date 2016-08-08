@@ -18,10 +18,10 @@ bp = Blueprint('auth', __name__, url_prefix='/v1/auth')
 
 @bp.route('/register', methods=['POST'])
 @validated(RegistrationValidator)
-def register(validator):
-    username = validator.form['username']
-    password = validator.form['password']
-    email = validator.form['email']
+def register(data):
+    username = data['username']
+    password = data['password']
+    email = data['email']
     user = User.add(username, password, email)
     if email:
         token = user.get_verification()
@@ -59,9 +59,9 @@ def verify(token):
 
 @bp.route('/reset', methods=['POST'])
 @validated(ResetValidator)
-def reset(validator):
+def reset(data):
     try:
-        user = User.get(User.email == validator.form['email'])
+        user = User.get(User.email == data['email'])
     except User.DoesNotExist:
         return send_error('email not found')
     else:
@@ -76,17 +76,17 @@ def reset(validator):
 
 @bp.route('/recover/<token>', methods=['POST'])
 @validated(RecoverValidator)
-def recover(token, validator):
-    if User.recover(token, validator.form['password']):
+def recover(token, data):
+    if User.recover(token, data['password']):
         return send_success()
     return send_error('token not found')
 
 
 @bp.route('/login', methods=['POST'])
 @validated(LoginValidator)
-def login(validator):
-    username = validator.form['username']
-    password = validator.form['password']
+def login(data):
+    username = data['username']
+    password = data['password']
     token = User.authenticate(username, password)
     if token:
         response = make_response(send_data({'auth': token}))

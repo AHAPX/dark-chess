@@ -29,9 +29,9 @@ def types():
 @bp.route('/new', methods=['POST'])
 @authenticated
 @validated(GameNewValidator)
-def new(validator):
-    game_type = validator.cleaned_data['type']
-    game_limit = validator.cleaned_data['limit']
+def new(data):
+    game_type = data['type']
+    game_limit = data['limit']
     queue_prefix = get_prefix(game_type, game_limit)
     if game_type == consts.TYPE_NOLIMIT or game_limit:
         enemy_token = get_from_queue(queue_prefix)
@@ -68,9 +68,9 @@ def new(validator):
 @bp.route('/invite', methods=['POST'])
 @authenticated
 @validated(GameNewValidator)
-def invite(validator):
-    game_type = validator.cleaned_data['type']
-    game_limit = validator.cleaned_data['limit']
+def invite(data):
+    game_type = data['type']
+    game_limit = data['limit']
     if game_type != consts.TYPE_NOLIMIT and not game_limit:
         return send_error('game limit must be set for no limit game')
     token_game = generate_token(True)
@@ -142,9 +142,9 @@ def info(game):
 @bp.route('/<token>/move', methods=['POST'])
 @with_game
 @validated(GameMoveValidator)
-def move(game, validator):
-    coor1 = validator.cleaned_data['coor1']
-    coor2 = validator.cleaned_data['coor2']
+def move(game, data):
+    coor1 = data['coor1']
+    coor2 = data['coor2']
     return game.move(coor1, coor2)
 
 

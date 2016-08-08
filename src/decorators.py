@@ -92,6 +92,6 @@ def validated(validator):
                 return send_error(exc.message)
             if not val.is_valid():
                 return send_error(val.get_error())
-            return f(validator=val, *args, **kwargs)
+            return f(data=val.cleaned_data, *args, **kwargs)
         return decorator
     return wrapper
