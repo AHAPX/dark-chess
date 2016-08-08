@@ -3,6 +3,7 @@ from unittest.mock import patch
 from tests.base import TestCaseWeb, app
 from cache import get_cache
 from models import Game, User
+from helpers import get_prefix, get_queue_name
 import consts
 
 
@@ -310,6 +311,46 @@ class TestHandlerGame(TestCaseWeb):
         data = self.load_data(resp)
         expect = {'rc': True, 'game': {}}
         self.assertComprateDicts(data, expect)
+
+    def test_new_game_7(self):
+        # one user starts game twice, only last should stay
+        name = get_queue_name(get_prefix(consts.TYPE_NOLIMIT))
+        self.login(*self.add_user('user1', 'password', None))
+        resp = self.client.post(self.url('new'), data={})
+        data = self.load_data(resp)
+        self.assertTrue(data['rc'])
+        token1 = data['game']
+        self.assertIn(token1, get_cache(name).decode())
+        resp = self.client.post(self.url('new'), data={})
+        data = self.load_data(resp)
+        self.assertTrue(data['rc'])
+        token2 = data['game']
+        self.assertNotIn(token1, get_cache(name).decode())
+        self.assertIn(token2, get_cache(name).decode())
+
+    def test_invite_1(self):
+        resp = self.client.post(self.url('invite'), data={'type': 'slow'})
+        self.assertFalse(self.load_data(resp)['rc'])
+
+    def test_invite_2(self):
+        # create invitation
+        resp = self.client.post(self.url('invite'), data={'type': 'no limit'})
+        data = self.load_data(resp)
+        expect = {'rc': True, 'game': {}, 'invite': {}}
+        self.assertComprateDicts(data, expect)
+        token = data['invite']
+        # start game with invitation token
+        resp = self.client.get(self.url('invite/{}'.format(token)))
+        data = self.load_data(resp)
+        expect = {
+            'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {}, 
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
+        }
+        self.assertComprateDicts(data, expect)
+
+    def test_invite_3(self):
+        resp = self.client.get(self.url('invite/token'), data={'type': 'slow'})
+        self.assertFalse(self.load_data(resp)['rc'])
 
     def test_game_info(self):
         user_token1, user_token2 = self.new_game()

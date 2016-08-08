@@ -16,7 +16,7 @@ bp = Blueprint('game', __name__, url_prefix='/v1/game')
 
 @bp.route('/types')
 @use_cache()
-def _types():
+def types():
     types = {
         t['name']: {
             'description': t['description'],
@@ -29,7 +29,7 @@ def _types():
 @bp.route('/new', methods=['POST'])
 @authenticated
 @validated(GameNewValidator)
-def _new_game(validator):
+def new(validator):
     game_type = validator.cleaned_data['type']
     game_limit = validator.cleaned_data['limit']
     queue_prefix = get_prefix(game_type, game_limit)
@@ -49,6 +49,10 @@ def _new_game(validator):
                 enemy_user = User.get(pk=user_id)
             except User.DoesNotExist:
                 pass
+            else:
+                if enemy_user == request.user:
+                    add_to_queue(token, queue_prefix)
+                    return send_data(result)
         game = Game.new_game(
             enemy_token, token, game_type, game_limit,
             white_user=enemy_user, black_user=request.user
@@ -61,17 +65,60 @@ def _new_game(validator):
     return send_data(result)
 
 
+@bp.route('/invite', methods=['POST'])
+@authenticated
+@validated(GameNewValidator)
+def invite(validator):
+    game_type = validator.cleaned_data['type']
+    game_limit = validator.cleaned_data['limit']
+    if game_type != consts.TYPE_NOLIMIT and not game_limit:
+        return send_error('game limit must be set for no limit game')
+    token_game = generate_token(True)
+    token_invite = generate_token(True)
+    set_cache('invite_{}'.format(token_invite), (token_game, game_type, game_limit))
+    if request.user:
+        set_cache('user_{}'.format(token_game), request.user.pk, 3600)
+    return send_data({
+        'game': token_game,
+        'invite': token_invite,
+    })
+
+
+@bp.route('/invite/<token>')
+@authenticated
+def invited(token):
+    try:
+        enemy_token, game_type, game_limit = get_cache('invite_{}'.format(token))
+    except:
+        return send_error('game not found')
+    enemy_user = None
+    user_id = get_cache('user_{}'.format(enemy_token))
+    if user_id:
+        try:
+            enemy_user = User.get(pk=user_id)
+        except User.DoesNotExist:
+            pass
+    user_token = generate_token(True)
+    game = Game.new_game(
+        enemy_token, user_token, game_type, game_limit,
+        white_user=enemy_user, black_user=request.user
+    )
+    result = {'game': user_token}
+    result.update(game.get_info(consts.BLACK))
+    return send_data(result)
+
+
 @bp.route('/<token>/info')
 @use_cache(1, name='game_info_handler')
 @with_game
-def _game_info(game):
+def info(game):
     return send_data(game.get_info())
 
 
 @bp.route('/<token>/move', methods=['POST'])
 @with_game
 @validated(GameMoveValidator)
-def _game_move(game, validator):
+def move(game, validator):
     coor1 = validator.cleaned_data['coor1']
     coor2 = validator.cleaned_data['coor2']
     return game.move(coor1, coor2)
@@ -79,24 +126,24 @@ def _game_move(game, validator):
 
 @bp.route('/<token>/draw/accept')
 @with_game
-def _draw_accept(game):
+def draw_accept(game):
     return game.draw_accept()
 
 
 @bp.route('/<token>/draw/refuse')
 @with_game
-def _draw_refuse(game):
+def draw_refuse(game):
     return game.draw_refuse()
 
 
 @bp.route('/<token>/resign')
 @with_game
-def _resign(game):
+def resign(game):
     return game.resign()
 
 
 @bp.route('/<token>/moves')
 @use_cache(name='game_moves_handler')
 @with_game
-def _moves(game):
+def moves(game):
     return game.moves()

@@ -16,5 +16,5 @@ bp = Blueprint('main', __name__, url_prefix='/v1/')
 
 @bp.route('/')
 @use_cache()
-def _index():
+def index():
     return send_message('welcome to dark chess')
