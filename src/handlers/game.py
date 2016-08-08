@@ -108,6 +108,30 @@ def invited(token):
     return send_data(result)
 
 
+@bp.route('/active')
+@authenticated
+def active():
+    from models import Game
+
+    result = {'games': []}
+    if request.user:
+        games = Game.select().where(
+            Game.date_end == None,
+            (Game.player_white == request.user) | (Game.player_black == request.user),
+        )
+        for game in games:
+            try:
+                white_token, black_token = get_cache('game_{}'.format(game.pk))
+            except:
+                pass
+            else:
+                if game.player_white == request.user:
+                    result['games'].append(white_token)
+                else:
+                    result['games'].append(black_token)
+    return send_data(result)
+
+
 @bp.route('/<token>/info')
 @use_cache(1, name='game_info_handler')
 @with_game

@@ -38,6 +38,7 @@ class Game(object):
         )
         set_cache(white_token, (game.model.pk, consts.WHITE, black_token))
         set_cache(black_token, (game.model.pk, consts.BLACK, white_token))
+        set_cache('game_{}'.format(game.model.pk), (white_token, black_token))
         game.send_ws(game.get_info(consts.WHITE), consts.WS_START, consts.WHITE)
         game.send_ws(game.get_info(consts.BLACK), consts.WS_START, consts.BLACK)
         return game

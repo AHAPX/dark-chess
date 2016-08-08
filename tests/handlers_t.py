@@ -352,6 +352,29 @@ class TestHandlerGame(TestCaseWeb):
         resp = self.client.get(self.url('invite/token'), data={'type': 'slow'})
         self.assertFalse(self.load_data(resp)['rc'])
 
+    def test_active(self):
+        # create user1 and invite
+        self.login(*self.add_user('user1', 'password', None))
+        resp = self.client.post(self.url('invite'), data={'type': 'no limit'})
+        data = self.load_data(resp)
+        game1_w = data['game']
+        # create user2, accept invite and invite again
+        self.login(*self.add_user('user2', 'password', None))
+        resp = self.client.get(self.url('invite/{}'.format(data['invite'])))
+        game1_b = self.load_data(resp)['game']
+        resp = self.client.post(self.url('invite'), data={'type': 'no limit'})
+        data = self.load_data(resp)
+        game2_w = data['game']
+        # check games of user2
+        resp = self.client.get(self.url('active'))
+        self.assertEqual(self.load_data(resp), {'rc': True, 'games': [game1_b]})
+        # login as user1, accept invite and check games
+        self.login('user1', 'password')
+        resp = self.client.get(self.url('invite/{}'.format(data['invite'])))
+        game2_b = self.load_data(resp)['game']
+        resp = self.client.get(self.url('active'))
+        self.assertEqual(self.load_data(resp), {'rc': True, 'games': [game1_w, game2_b]})
+
     def test_game_info(self):
         user_token1, user_token2 = self.new_game()
         # test first token
