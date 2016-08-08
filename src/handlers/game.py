@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, Blueprint
 
 import consts
 from serializers import send_data, send_error
@@ -6,13 +6,15 @@ from decorators import with_game, use_cache, authenticated
 from cache import add_to_queue, get_from_queue, get_from_any_queue, set_cache, get_cache
 from helpers import generate_token, get_prefix
 from game import Game
-from app import app
 from models import User
 from validators import GameNewValidator, GameMoveValidator
 import errors
 
 
-@app.route('/game/types')
+bp = Blueprint('game', __name__, url_prefix='/v1/game')
+
+
+@bp.route('/types')
 @use_cache()
 def _types():
     types = {
@@ -24,7 +26,7 @@ def _types():
     return send_data({'types': types})
 
 
-@app.route('/game/new', methods=['POST'])
+@bp.route('/new', methods=['POST'])
 @authenticated
 def _new_game():
     try:
@@ -64,14 +66,14 @@ def _new_game():
     return send_data(result)
 
 
-@app.route('/game/<token>/info')
+@bp.route('/<token>/info')
 @use_cache(1, name='game_info_handler')
 @with_game
 def _game_info(game):
     return send_data(game.get_info())
 
 
-@app.route('/game/<token>/move', methods=['POST'])
+@bp.route('/<token>/move', methods=['POST'])
 @with_game
 def _game_move(game):
     try:
@@ -85,25 +87,25 @@ def _game_move(game):
     return game.move(coor1, coor2)
 
 
-@app.route('/game/<token>/draw/accept')
+@bp.route('/<token>/draw/accept')
 @with_game
 def _draw_accept(game):
     return game.draw_accept()
 
 
-@app.route('/game/<token>/draw/refuse')
+@bp.route('/<token>/draw/refuse')
 @with_game
 def _draw_refuse(game):
     return game.draw_refuse()
 
 
-@app.route('/game/<token>/resign')
+@bp.route('/<token>/resign')
 @with_game
 def _resign(game):
     return game.resign()
 
 
-@app.route('/game/<token>/moves')
+@bp.route('/<token>/moves')
 @use_cache(name='game_moves_handler')
 @with_game
 def _moves(game):

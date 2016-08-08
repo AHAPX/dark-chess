@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+from urllib.parse import urljoin
 import inspect
 import sys
 import json
@@ -10,7 +11,7 @@ from fakeredis import FakeStrictRedis
 
 import cache
 from models import User, Game, Move
-from handlers import app
+from app import app
 
 
 test_db = SqliteDatabase(':memory:')
@@ -52,11 +53,15 @@ class TestCaseDB(TestCaseCache):
 
 
 class TestCaseWeb(TestCaseDB):
+    url_prefix = '/v1/'
 
     def setUp(self):
         app.config['TESTING'] = True
         self.client = app.test_client()
         super(TestCaseWeb, self).setUp()
+
+    def url(self, url):
+        return urljoin(self.url_prefix, url)
 
     def load_data(self, response):
         self.assertEqual(response.status_code, 200)
@@ -65,7 +70,7 @@ class TestCaseWeb(TestCaseDB):
     def add_user(self, username, password, email, token='token'):
         with patch('models.User.get_verification') as mock:
             mock.return_value = token
-            self.client.post('/auth/register', data={
+            self.client.post('/v1/auth/register', data={
                 'username': username,
                 'password': password,
                 'email': email,
@@ -77,7 +82,7 @@ class TestCaseWeb(TestCaseDB):
             'username': username,
             'password': password,
         }
-        resp = self.client.post('/auth/login', data=user_data)
+        resp = self.client.post('/v1/auth/login', data=user_data)
         data = self.load_data(resp)
         self.client.set_cookie('localhost', 'auth', data['auth'])
         return data['auth']

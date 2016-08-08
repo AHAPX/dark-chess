@@ -24,20 +24,20 @@ class TestConnections(TestCaseBase):
         }
         self.assertEqual(fill_msg({}, 'subj', ['user1@mail'], 'sender@mail'), expect_2)
 
-    @patch('connections.tasks.send_mail.delay')
+    @patch('tasks.send_mail.delay')
     def test_send_mail(self, delay):
         send_mail('subj', 'body', ['user1@mail'])
         delay.assert_called_once()
 
     @patch('connections.render_template')
-    @patch('connections.tasks.send_mail.delay')
+    @patch('tasks.send_mail.delay')
     def test_send_mail_template(self, delay, render_template):
         with app.test_request_context():
             send_mail_template('registration', ['user1@mail'])
         delay.assert_called_once()
         self.assertEqual(render_template.call_count, 3)
 
-    @patch('connections.tasks.send_ws.delay')
+    @patch('tasks.send_ws.delay')
     def test_send_ws(self, delay):
         send_ws('test', 'sig', 'tag')
         msg = {'message': {'message': 'test', 'signal': 'sig'}, 'tags': ['tag']}

@@ -1,5 +1,5 @@
 import config
-from handlers import *
+from app import app
 
 
 app.run(host=config.HOST, port=config.PORT)

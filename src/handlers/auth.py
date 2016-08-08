@@ -1,6 +1,6 @@
 import datetime
 
-from flask import request, make_response
+from flask import request, make_response, Blueprint
 
 import config
 from serializers import send_data, send_message, send_error, send_success
@@ -8,13 +8,15 @@ from decorators import authenticated, use_cache, login_required
 from models import User
 from cache import delete_cache
 from connections import send_mail_template
-from app import app
 from helpers import get_request_arg
 from validators import RegistrationValidator, LoginValidator, ResetValidator, RecoverValidator
 import errors
 
 
-@app.route('/auth/register', methods=['POST'])
+bp = Blueprint('auth', __name__, url_prefix='/v1/auth')
+
+
+@bp.route('/register', methods=['POST'])
 def register():
     try:
         validator = RegistrationValidator(request)
@@ -36,7 +38,7 @@ def register():
     return send_message('registration successful')
 
 
-@app.route('/auth/verification/')
+@bp.route('/verification')
 @authenticated
 @login_required
 def get_verification():
@@ -52,7 +54,7 @@ def get_verification():
     return send_success()
 
 
-@app.route('/auth/verification/<token>')
+@bp.route('/verification/<token>')
 @use_cache(60)
 def verify(token):
     if User.verify_email(token):
@@ -60,7 +62,7 @@ def verify(token):
     return send_error('token not found')
 
 
-@app.route('/auth/reset', methods=['POST'])
+@bp.route('/reset', methods=['POST'])
 def reset():
     try:
         validator = ResetValidator(request)
@@ -82,7 +84,7 @@ def reset():
     return send_error(validator.get_error())
 
 
-@app.route('/auth/recover/<token>', methods=['POST'])
+@bp.route('/recover/<token>', methods=['POST'])
 def recover(token):
     try:
         validator = RecoverValidator(request)
@@ -95,7 +97,7 @@ def recover(token):
     return send_error(validator.get_error())
 
 
-@app.route('/auth/login', methods=['POST'])
+@bp.route('/login', methods=['POST'])
 def login():
     try:
         validator = LoginValidator(request)
@@ -114,7 +116,7 @@ def login():
     return send_error(validator.get_error())
 
 
-@app.route('/auth/logout')
+@bp.route('/logout')
 @authenticated
 @login_required
 def logout():

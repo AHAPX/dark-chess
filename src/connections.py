@@ -5,7 +5,6 @@ import json
 from flask import render_template
 
 import config
-import tasks
 import consts
 from helpers import with_context
 
@@ -20,11 +19,15 @@ def fill_msg(msg, subject, recipients, sender=None):
 
 
 def send_mail(subject, body, recipients, sender=None):
+    import tasks
+
     msg = fill_msg(MIMEText(body, 'text'), subject, recipients, sender)
     tasks.send_mail.delay(msg, recipients, sender)
 
 
 def send_mail_template(name, recipients, sender=None, data={}):
+    import tasks
+
     data = with_context(data)
     subject = render_template('email/{}_subj.plain'.format(name), **data)
     body_plain = render_template('email/{}_body.plain'.format(name), **data)
@@ -37,6 +40,8 @@ def send_mail_template(name, recipients, sender=None, data={}):
 
 
 def send_ws(message, signal=consts.WS_NONE, tags=[]):
+    import tasks
+
     msg = {
         'message': {
             'message': message,
