@@ -1,12 +1,14 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from datetime import datetime
 
 from tests.base import TestCaseDB
 import consts
-from decorators import authenticated, with_game, formatted, use_cache, login_required
+from decorators import (authenticated, with_game, formatted, use_cache,
+    login_required, validated)
 from cache import set_cache, delete_cache, get_cache_func_name
 from models import User, Game
 from helpers import invert_color
+import errors
 
 
 class TestDecorators(TestCaseDB):
@@ -99,3 +101,14 @@ class TestDecorators(TestCaseDB):
         with patch('tests.decorators_t.invert_color') as mock:
             self.assertEqual(func(a, b=b), 'ok')
             mock.assert_called_once_with(a)
+
+    def test_validated(self):
+        dummy_validator = MagicMock()
+        func = validated(dummy_validator)(lambda *a, **k: 'ok')
+        self.assertEqual(func(), 'ok')
+        # raise error
+        dummy_validator.side_effect = errors.ValidationError('a')
+        with patch('decorators.send_error') as mock:
+            mock.return_value = '_error'
+            self.assertEqual(func(), '_error')
+            mock.assert_called_once_with('a is not valid')

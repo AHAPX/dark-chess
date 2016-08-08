@@ -2,7 +2,7 @@ from flask import request, Blueprint
 
 import consts
 from serializers import send_data, send_error
-from decorators import with_game, use_cache, authenticated
+from decorators import with_game, use_cache, authenticated, validated
 from cache import add_to_queue, get_from_queue, get_from_any_queue, set_cache, get_cache
 from helpers import generate_token, get_prefix
 from game import Game
@@ -28,13 +28,8 @@ def _types():
 
 @bp.route('/new', methods=['POST'])
 @authenticated
-def _new_game():
-    try:
-        validator = GameNewValidator(request)
-    except errors.ValidationError as exc:
-        return send_error(exc.message)
-    if not validator.is_valid():
-        return send_error(validator.get_error())
+@validated(GameNewValidator)
+def _new_game(validator):
     game_type = validator.cleaned_data['type']
     game_limit = validator.cleaned_data['limit']
     queue_prefix = get_prefix(game_type, game_limit)
@@ -75,13 +70,8 @@ def _game_info(game):
 
 @bp.route('/<token>/move', methods=['POST'])
 @with_game
-def _game_move(game):
-    try:
-        validator = GameMoveValidator(request)
-    except errors.ValidationError as exc:
-        return send_error(exc.message)
-    if not validator.is_valid():
-        return send_error(validator.get_error())
+@validated(GameMoveValidator)
+def _game_move(game, validator):
     coor1 = validator.cleaned_data['coor1']
     coor2 = validator.cleaned_data['coor2']
     return game.move(coor1, coor2)

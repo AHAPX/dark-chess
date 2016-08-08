@@ -4,7 +4,7 @@ from flask import request, make_response, Blueprint
 
 import config
 from serializers import send_data, send_message, send_error, send_success
-from decorators import authenticated, use_cache, login_required
+from decorators import authenticated, use_cache, login_required, validated
 from models import User
 from cache import delete_cache
 from connections import send_mail_template, send_ws
@@ -17,13 +17,8 @@ bp = Blueprint('auth', __name__, url_prefix='/v1/auth')
 
 
 @bp.route('/register', methods=['POST'])
-def register():
-    try:
-        validator = RegistrationValidator(request)
-    except errors.ValidationError as exc:
-        return send_error(exc.message)
-    if not validator.is_valid():
-        return send_error(validator.get_error())
+@validated(RegistrationValidator)
+def register(validator):
     username = validator.form['username']
     password = validator.form['password']
     email = validator.form['email']
@@ -63,57 +58,42 @@ def verify(token):
 
 
 @bp.route('/reset', methods=['POST'])
-def reset():
+@validated(ResetValidator)
+def reset(validator):
     try:
-        validator = ResetValidator(request)
-    except errors.ValidationError as exc:
-        return send_error(exc.message)
-    if validator.is_valid():
-        try:
-            user = User.get(User.email == validator.form['email'])
-        except User.DoesNotExist:
-            return send_error('email not found')
-        else:
-            token = user.get_reset()
-            data = {
-                'username': user.username,
-                'token': token,
-            }
-            send_mail_template('reset', [user.email], data=data)
-        return send_success()
-    return send_error(validator.get_error())
+        user = User.get(User.email == validator.form['email'])
+    except User.DoesNotExist:
+        return send_error('email not found')
+    else:
+        token = user.get_reset()
+        data = {
+            'username': user.username,
+            'token': token,
+        }
+        send_mail_template('reset', [user.email], data=data)
+    return send_success()
 
 
 @bp.route('/recover/<token>', methods=['POST'])
-def recover(token):
-    try:
-        validator = RecoverValidator(request)
-    except errors.ValidationError as exc:
-        return send_error(exc.message)
-    if validator.is_valid():
-        if User.recover(token, validator.form['password']):
-            return send_success()
-        return send_error('token not found')
-    return send_error(validator.get_error())
+@validated(RecoverValidator)
+def recover(token, validator):
+    if User.recover(token, validator.form['password']):
+        return send_success()
+    return send_error('token not found')
 
 
 @bp.route('/login', methods=['POST'])
-def login():
-    try:
-        validator = LoginValidator(request)
-    except errors.ValidationError as exc:
-        return send_error(exc.message)
-    if validator.is_valid():
-        username = validator.form['username']
-        password = validator.form['password']
-        token = User.authenticate(username, password)
-        if token:
-            response = make_response(send_data({'auth': token}))
-            expire_date = datetime.datetime.now() + datetime.timedelta(seconds=config.SESSION_TIME)
-            response.set_cookie('auth', token, expires=expire_date)
-            return response
-        return send_error('username or password is incorrect')
-    return send_error(validator.get_error())
+@validated(LoginValidator)
+def login(validator):
+    username = validator.form['username']
+    password = validator.form['password']
+    token = User.authenticate(username, password)
+    if token:
+        response = make_response(send_data({'auth': token}))
+        expire_date = datetime.datetime.now() + datetime.timedelta(seconds=config.SESSION_TIME)
+        response.set_cookie('auth', token, expires=expire_date)
+        return response
+    return send_error('username or password is incorrect')
 
 
 @bp.route('/logout')

@@ -57,6 +57,7 @@ class TestCaseWeb(TestCaseDB):
 
     def setUp(self):
         app.config['TESTING'] = True
+        app.config['DEBUG'] = True
         self.client = app.test_client()
         super(TestCaseWeb, self).setUp()
 
