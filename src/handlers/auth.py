@@ -1,6 +1,6 @@
 import datetime
 
-from flask import request, make_response, Blueprint
+from flask import request, make_response, Blueprint, abort
 
 import config
 from serializers import send_data, send_message, send_error, send_success
@@ -104,3 +104,11 @@ def logout():
     response = make_response(send_message('logout successfully'))
     response.set_cookie('auth', expires=0)
     return response
+
+
+@bp.route('/authorized')
+@authenticated
+def authorized():
+    if request.user:
+        return send_data({'username': request.user.username})
+    abort(401)
