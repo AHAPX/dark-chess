@@ -273,3 +273,27 @@ class TestGame(TestCaseDB):
             call('game_moves_handler', token=self.game.black),
         ])
         self.assertEqual(delete_cache.call_count, 4)
+
+    def test_moves(self):
+        with patch('game.send_data') as mock:
+            self.game.move('e2', 'e4', WHITE)
+            self.game.move('e7', 'e5', BLACK)
+            self.game.move('b2', 'b3', WHITE)
+            self.game.move('d7', 'd6', BLACK)
+            mock.reset_mock()
+            # only white moves
+            expect = {'moves': ['e2-e4', 'b2-b3']}
+            Game.load_game('1234').moves()
+            mock.assert_called_once_with(expect)
+            mock.reset_mock()
+            # only black moves
+            expect = {'moves': ['e7-e5', 'd7-d6']}
+            Game.load_game('qwer').moves()
+            mock.assert_called_once_with(expect)
+            mock.reset_mock()
+            # all moves
+            self.game.model.game_over(END_DRAW)
+            expect = {'moves': ['e2-e4', 'e7-e5', 'b2-b3', 'd7-d6']}
+            Game.load_game('1234').moves()
+            Game.load_game('qwer').moves()
+            mock.assert_has_calls([call(expect), call(expect)])

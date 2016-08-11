@@ -265,5 +265,18 @@ class TestHandlerGame(TestCaseWeb):
 
     def test_moves(self):
         user_token1, user_token2 = self.new_game()
+        move1, move2 = 'e2-e4', 'e7-e5'
+        # do moves
+        self.client.post(self.url('{}/move'.format(user_token1)), data={'move': move1})
+        self.client.post(self.url('{}/move'.format(user_token2)), data={'move': move2})
+        # check moves
         resp = self.client.get(self.url('{}/moves'.format(user_token1)))
-        self.assertEqual(self.load_data(resp), {'rc': True, 'moves': []})
+        self.assertEqual(self.load_data(resp), {'rc': True, 'moves': [move1]})
+        resp = self.client.get(self.url('{}/moves'.format(user_token2)))
+        self.assertEqual(self.load_data(resp), {'rc': True, 'moves': [move2]})
+        # end game and check moves again
+        self.client.get(self.url('{}/resign'.format(user_token1)))
+        resp = self.client.get(self.url('{}/moves'.format(user_token1)))
+        self.assertEqual(self.load_data(resp), {'rc': True, 'moves': [move1, move2]})
+        resp = self.client.get(self.url('{}/moves'.format(user_token2)))
+        self.assertEqual(self.load_data(resp), {'rc': True, 'moves': [move1, move2]})

@@ -162,19 +162,26 @@ class Game(object):
                 delete_cache(name2)
                 self.send_ws('game over', consts.WS_DRAW, consts.WHITE)
                 self.send_ws('game over', consts.WS_DRAW, consts.BLACK)
+                self.onMove()
                 return True
         return False
 
     def resign(self, color=None):
+        winner = invert_color(self.get_color(color))
         if self.model.ended:
             return send_error('game is over')
-        self.model.game_over(consts.END_RESIGN)
-        self.send_ws('you win', consts.WS_WIN, invert_color(self.get_color(color)))
+        self.model.game_over(consts.END_RESIGN, winner=winner)
+        self.send_ws('you win', consts.WS_WIN, winner)
+        self.onMove()
         return send_success()
 
-    def moves(self):
+    def moves(self, color=None):
+        if not self.model.ended:
+            color = self.get_color(color)
+        else:
+            color = None
         return send_data({
-            'moves': [MoveSerializer(m).calc() for m in self.model.get_moves()]
+            'moves': [MoveSerializer(m).calc() for m in self.model.get_moves(color)]
         })
 
     def onMove(self):

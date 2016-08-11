@@ -101,6 +101,7 @@ class Game(BaseModel):
     type_game = peewee.IntegerField(default=consts.TYPE_NOLIMIT)
     time_limit = peewee.TimeField(null=True)
     end_reason = peewee.IntegerField(null=True)
+    winner = peewee.IntegerField(null=True)
 
     def add_move(self, figure, move, state, end_reason=None):
         with config.DB.atomic():
@@ -111,16 +112,17 @@ class Game(BaseModel):
             self.next_color = invert_color(color)
             self.date_state = datetime.now()
             if end_reason:
-                self.game_over(end_reason, save=False)
+                self.game_over(end_reason, save=False, winner=color)
             self.save()
             return Move.create(
                 game=self, number=num, figure=figure, move=move,
                 time_move=time_move, color=color
             )
 
-    def game_over(self, reason, date_end=None, save=True):
+    def game_over(self, reason, date_end=None, save=True, winner=None):
         self.date_end = date_end or datetime.now()
         self.end_reason = reason
+        self.winner = winner
         if save:
             self.save()
 
@@ -135,7 +137,8 @@ class Game(BaseModel):
             if (datetime.now() - self.date_state).total_seconds() > self.time_limit:
                 self.game_over(
                     consts.END_TIME,
-                    self.date_state + timedelta(seconds=self.time_limit)
+                    self.date_state + timedelta(seconds=self.time_limit),
+                    winner=invert_color(self.next_color)
                 )
                 return True
         elif self.type_game == consts.TYPE_FAST:
@@ -144,7 +147,8 @@ class Game(BaseModel):
             if time_spent + (datetime.now() - self.date_state).total_seconds() > self.time_limit:
                 self.game_over(
                     consts.END_TIME,
-                    self.date_state + timedelta(seconds=self.time_limit - time_spent)
+                    self.date_state + timedelta(seconds=self.time_limit - time_spent),
+                    winner=invert_color(self.next_color)
                 )
                 return True
         return False
@@ -165,8 +169,11 @@ class Game(BaseModel):
                 time_left -= (datetime.now() - self.date_state).total_seconds()
             return time_left
 
-    def get_moves(self):
-        return self.moves.select().order_by(Move.number)
+    def get_moves(self, color=None):
+        moves = self.moves.select().order_by(Move.number)
+        if color:
+            moves = moves.where(Move.color == color)
+        return moves
 
 
 class Move(BaseModel):

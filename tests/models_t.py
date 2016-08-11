@@ -206,3 +206,11 @@ class TestModelsGame(TestCaseDB):
         self.assertIsNone(game.time_left(WHITE))
         self.assertIsNone(game.time_left(BLACK))
         self.assertFalse(game.is_time_over())
+
+    def test_get_moves_1(self):
+        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        game.add_move('K', 'e1-e2', 'Ke2,ke8')
+        game.add_move('k', 'e8-e7', 'Ke2,ke7')
+        self.assertEqual([1], [g.pk for g in game.get_moves(WHITE)])
+        self.assertEqual([2], [g.pk for g in game.get_moves(BLACK)])
+        self.assertEqual([1, 2], [g.pk for g in game.get_moves()])
