@@ -2,7 +2,7 @@ from tests.base import TestCaseWeb
 from cache import get_cache
 from models import Game, User
 from helpers import get_prefix, get_queue_name
-import consts
+from consts import TYPES, TYPE_NOLIMIT, BLACK, WHITE
 
 
 class TestHandlerGame(TestCaseWeb):
@@ -22,9 +22,11 @@ class TestHandlerGame(TestCaseWeb):
     def test_types(self):
         resp = self.client.get(self.url('types'))
         data = self.load_data(resp)
-        self.assertIn('no limit', data['types'])
-        self.assertIn('slow', data['types'])
-        self.assertIn('fast', data['types'])
+        self.assertEqual(len(data['types']), len(TYPES.items()))
+        index = 0
+        for key in TYPES.keys():
+            self.assertEqual(len(data['types'][index]['periods']), len(TYPES[key]['periods']))
+            index += 1
 
     def test_new_game_1(self):
         # wrong method
@@ -65,8 +67,8 @@ class TestHandlerGame(TestCaseWeb):
         game = Game.get()
         self.assertIsNone(game.player_white)
         self.assertIsNone(game.player_black)
-        self.assertEqual(get_cache(user1_token), (game.pk, consts.WHITE, user2_token))
-        self.assertEqual(get_cache(user2_token), (game.pk, consts.BLACK, user1_token))
+        self.assertEqual(get_cache(user1_token), (game.pk, WHITE, user2_token))
+        self.assertEqual(get_cache(user2_token), (game.pk, BLACK, user1_token))
 
     def test_new_game_3(self):
         # case 2 with login
@@ -112,7 +114,7 @@ class TestHandlerGame(TestCaseWeb):
 
     def test_new_game_7(self):
         # one user starts game twice, only last should stay
-        name = get_queue_name(get_prefix(consts.TYPE_NOLIMIT))
+        name = get_queue_name(get_prefix(TYPE_NOLIMIT))
         self.login(*self.add_user('user1', 'password', None))
         resp = self.client.post(self.url('new'), data={})
         data = self.load_data(resp)

@@ -17,12 +17,14 @@ bp = Blueprint('game', __name__, url_prefix='/v1/game')
 @bp.route('/types')
 @use_cache()
 def types():
-    types = {
-        t['name']: {
-            'description': t['description'],
-            'periods': t['periods']
-        } for t in consts.TYPES.values()
-    }
+    types = [{
+        'name': t['name'],
+        'description': t['description'],
+        'periods': [{
+            'name': k,
+            'title': v[0],
+        } for k, v in sorted(t['periods'].items(), key=lambda a: a[1][1])],
+    } for t in consts.TYPES.values()]
     return send_data({'types': types})
 
 
