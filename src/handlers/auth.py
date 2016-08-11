@@ -52,7 +52,10 @@ def get_verification():
 @bp.route('/verification/<token>')
 @use_cache(60)
 def verify(token):
-    if User.verify_email(token):
+    user = User.get_by_token(token)
+    if user:
+        user.verify()
+        delete_cache(token)
         return send_success()
     return send_error('token not found')
 
@@ -74,11 +77,22 @@ def reset(data):
     return send_success()
 
 
-@bp.route('/recover/<token>', methods=['POST'])
-@validated(RecoverValidator)
-def recover(token, data):
-    if User.recover(token, data['password']):
-        return send_success()
+@bp.route('/recover/<token>', methods=['GET', 'POST'])
+def recover(token):
+
+    @validated(RecoverValidator)
+    def _post(user, data):
+        user.set_password(data['password'])
+        user.save()
+        delete_cache(token)
+        return send_message('password changed')
+
+    user = User.get_by_token(token)
+    if user:
+        if request.method == 'GET':
+            return send_success()
+        elif request.method == 'POST':
+            return _post(user)
     return send_error('token not found')
 
 
@@ -111,4 +125,4 @@ def logout():
 def authorized():
     if request.user:
         return send_data({'username': request.user.username})
-    abort(401)
+    return send_error('not authorized')

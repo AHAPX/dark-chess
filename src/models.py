@@ -39,17 +39,18 @@ class User(BaseModel):
         return token
 
     @classmethod
-    def verify_email(cls, token):
+    def get_by_token(cls, token):
         user_id = get_cache(token)
-        if user_id:
-            try:
-                user = cls.get(pk=user_id)
-            except cls.DoesNotExist:
-                return False
-            user.verify()
-            delete_cache(token)
-            return user
-        return False
+        if not user_id:
+            return
+        try:
+            return cls.get(pk=user_id)
+        except cls.DoesNotExist:
+            return
+
+    def set_password(self, password):
+        self.password=encrypt_password(password)
+        self.save()
 
     def get_verification(self):
         if self.verified:
@@ -78,20 +79,6 @@ class User(BaseModel):
         self.date_last_reset = datetime.now()
         self.save()
         return token
-
-    @classmethod
-    def recover(cls, token, password):
-        user_id = get_cache(token)
-        if user_id:
-            try:
-                user = cls.get(pk=user_id)
-            except cls.DoesNotExist:
-                return False
-            user.password = encrypt_password(password)
-            user.save()
-            delete_cache(token)
-            return user
-        return False
 
     def verify(self):
         self.date_verified = datetime.now()

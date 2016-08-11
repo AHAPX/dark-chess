@@ -7,6 +7,7 @@ from flask import Flask
 from handlers.auth import bp as bp_auth
 from handlers.main import bp as bp_main
 from handlers.game import bp as bp_game
+from errors import BaseException
 
 
 app = Flask(__name__, instance_relative_config=True)
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 
 @app.errorhandler(Exception)
 def all_exception_handler(error):
+    if isinstance(error, BaseException):
+        from serializers import send_error
+        return send_error(error.message)
     try:
         logger.critical('\n'.join(traceback.format_tb(sys.exc_info()[2])))
     except:

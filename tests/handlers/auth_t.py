@@ -163,6 +163,13 @@ class TestHandlerAuth(TestCaseWeb):
         self.assertFalse(data['rc'])
         self.assertIn('error', data)
 
+    def test_recover_3(self):
+        self.add_user('user1', 'passwd', 'user1@fakemail')
+        resp = self.client.get(self.url('recover/token'))
+        data = self.load_data(resp)
+        self.assertFalse(data['rc'])
+        self.assertIn('error', data)
+
     def test_reset_and_recover(self):
         self.add_user('user1', 'password', 'user1@fakemail')
         with patch('handlers.auth.send_mail_template') as mock,\
@@ -174,13 +181,15 @@ class TestHandlerAuth(TestCaseWeb):
                 'token': 'token',
             })
             self.assertTrue(self.load_data(resp)['rc'])
+        resp = self.client.get(self.url('recover/token'))
+        self.assertTrue(self.load_data(resp)['rc'])
         resp = self.client.post(self.url('recover/token'), data={'password': 'password'})
         self.assertTrue(self.load_data(resp)['rc'])
         self.assertTrue(User.authenticate('user1', 'password'))
 
     def test_authorized(self):
         resp = self.client.get(self.url('authorized'))
-        self.assertEqual(resp.status_code, 401)
+        self.assertFalse(self.load_data(resp)['rc'])
         self.login(*self.add_user('user1', 'password', 'user1@fakemail'))
         resp = self.client.get(self.url('authorized'))
         data = self.load_data(resp)

@@ -6,12 +6,12 @@ import errors
 from tests.base import TestCaseDB
 from consts import WHITE, BLACK, TYPE_SLOW, TYPE_FAST
 from models import User, Game, Move
-from cache import get_cache
+from cache import get_cache, set_cache
 
 
-class TestModels(TestCaseDB):
+class TestModelsUser(TestCaseDB):
 
-    def test_User(self):
+    def test_create(self):
         # add user and check it
         user = User.add('user1', 'passwd', 'user1@fakemail.net')
         self.assertEqual(User.select().count(), 1)
@@ -25,9 +25,61 @@ class TestModels(TestCaseDB):
         # authentication
         self.assertFalse(User.authenticate('user1', 'passw'))
         token = User.authenticate('user1', 'passwd')
-        self.assertEqual(User.get(pk=get_cache(token)).password, str(user.password))
+        self.assertEqual(User.get_by_token(token).password, str(user.password))
 
-    def test_Game_and_Move(self):
+    def test_get_by_token(self):
+        # token not exist
+        self.assertIsNone(User.get_by_token('asdfgh'))
+        # user not exist
+        set_cache('asdfgh', 1)
+        self.assertIsNone(User.get_by_token('asdfgh'))
+        # success
+        user = User.add('user1', 'passwd')
+        set_cache('asdfgh', user.pk)
+        self.assertEqual(User.get_by_token('asdfgh'), user)
+
+    def test_verification(self):
+        # add user and check it
+        user = User.add('user1', 'passwd')
+        self.assertFalse(user.verified)
+        # try to verificate without email
+        with self.assertRaises(AttributeError):
+            user.get_verification()
+        # add email
+        user.email = 'user1@fakemail.net'
+        user.save()
+        # get verification success
+        token = user.get_verification()
+        self.assertEqual(User.get_by_token(token), user)
+        # try to verificate again
+        with self.assertRaises(errors.VerificationRequestError):
+            user.get_verification()
+        user.date_verification_token = datetime.now() - timedelta(seconds=config.VERIFICATION_PERIOD + 1)
+        user.save()
+        # get verification success
+        token = user.get_verification()
+        self.assertEqual(User.get_by_token(token), user)
+        user.verify()
+        # reload user
+        user = User.get(pk=user.pk)
+        self.assertTrue(user.verified)
+        # try to verificate verificated user
+        with self.assertRaises(errors.VerifiedError):
+            user.get_verification()
+
+    def test_reset(self):
+        # add user and check it
+        user = User.add('user1', 'passwd', 'u1@fakemail')
+        self.assertTrue(User.authenticate('user1', 'passwd'))
+        self.assertFalse(User.authenticate('user1', 'newpasswd'))
+        # get reset token
+        token = user.get_reset()
+        self.assertEqual(User.get_by_token(token), user)
+
+
+class TestModelsGame(TestCaseDB):
+
+    def test_move(self):
         # add game and check it
         game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
         self.assertTrue(abs((game.date_created - game.date_state).total_seconds()) < 1)
@@ -50,48 +102,6 @@ class TestModels(TestCaseDB):
         # add move with ending game
         game.add_move('k', 'e8-e7', 'Ke2,ke7', True)
         self.assertTrue(game.ended)
-
-    def test_verification(self):
-        # add user and check it
-        user = User.add('user1', 'passwd')
-        self.assertFalse(user.verified)
-        self.assertFalse(User.verify_email('qwerty'))
-        # try to verificate without email
-        with self.assertRaises(AttributeError):
-            user.get_verification()
-        # add email
-        user.email = 'user1@fakemail.net'
-        user.save()
-        # get verification success
-        token = user.get_verification()
-        # try to verificate again
-        with self.assertRaises(errors.VerificationRequestError):
-            user.get_verification()
-        user.date_verification_token = datetime.now() - timedelta(seconds=config.VERIFICATION_PERIOD + 1)
-        user.save()
-        # get verification success
-        token = user.get_verification()
-        self.assertEqual(User.verify_email(token).pk, user.pk)
-        # reload user
-        user = User.get(pk=user.pk)
-        self.assertTrue(user.verified)
-        # try to verificate verificated user
-        with self.assertRaises(errors.VerifiedError):
-            user.get_verification()
-
-    def test_reset(self):
-        # add user and check it
-        user = User.add('user1', 'passwd', 'u1@fakemail')
-        self.assertTrue(User.authenticate('user1', 'passwd'))
-        self.assertFalse(User.authenticate('user1', 'newpasswd'))
-        # get reset token
-        token = user.get_reset()
-        # set new password and check it
-        self.assertEqual(User.recover(token, 'newpasswd'), user)
-        self.assertTrue(User.authenticate('user1', 'newpasswd'))
-        # try set again, should be error
-        self.assertFalse(User.recover(token, 'newpasswd1'))
-        self.assertFalse(User.authenticate('user1', 'newpasswd1'))
 
     def test_game_over_1(self):
         # add game and check it
