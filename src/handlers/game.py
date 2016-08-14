@@ -64,6 +64,7 @@ def new(data):
         add_to_queue(token, queue_prefix)
         if request.user:
             set_cache('user_{}'.format(token), request.user.pk, 3600)
+        set_cache(token, True)
     return send_data(result)
 
 
@@ -80,6 +81,7 @@ def invite(data):
     set_cache('invite_{}'.format(token_invite), (token_game, game_type, game_limit))
     if request.user:
         set_cache('user_{}'.format(token_game), request.user.pk, 3600)
+    set_cache(token, True)
     return send_data({
         'game': token_game,
         'invite': token_invite,

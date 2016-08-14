@@ -6,7 +6,7 @@ import config
 import errors
 from models import User
 from cache import get_cache, set_cache, get_cache_func_name
-from serializers import send_error
+from serializers import send_error, send_message
 from format import format
 
 
@@ -48,6 +48,8 @@ def with_game(f):
 
         try:
             game = Game.load_game(token)
+        except errors.GameNotStartedError as exc:
+            return send_message(exc.message)
         except errors.GameNotFoundError as exc:
             return send_error(exc.message)
         return f(game, *args, **kwargs)

@@ -99,7 +99,7 @@ class Game(BaseModel):
     date_state = peewee.DateTimeField(default=datetime.now)
     next_color = peewee.IntegerField(default=consts.WHITE)
     type_game = peewee.IntegerField(default=consts.TYPE_NOLIMIT)
-    time_limit = peewee.TimeField(null=True)
+    time_limit = peewee.IntegerField(null=True)
     end_reason = peewee.IntegerField(null=True)
     winner = peewee.IntegerField(null=True)
 
@@ -174,6 +174,10 @@ class Game(BaseModel):
         if color:
             moves = moves.where(Move.color == color)
         return moves
+
+    def get_winner(self):
+        if self.ended and self.winner:
+            return consts.COLORS.get(self.winner)
 
 
 class Move(BaseModel):

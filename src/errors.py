@@ -59,6 +59,10 @@ class GameNotFoundError(BaseException):
     message = 'game not found'
 
 
+class GameNotStartedError(BaseException):
+    message = 'game not started'
+
+
 class TooOftenRequestError(BaseArgException):
     message = 'too often requests, try again after {} seconds'
 

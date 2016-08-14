@@ -348,6 +348,11 @@ class King(Figure):
                 continue
             if not fig or self.isEnemy(fig):
                 moves.append((x, y))
+# TODO: add castles to moves and make fine checking of figure movings
+#       if self.can_castle(True):
+#           moves.append((self.x + 2, self.y))
+#       if self.can_castle(False):
+#           moves.append((self.x - 2, self.y))
         self._moves = moves
 
     def updateAura(self):

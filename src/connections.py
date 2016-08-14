@@ -48,12 +48,14 @@ def send_mail_template(name, recipients, data={}, sender=None):
 def send_ws(message, signal=consts.WS_NONE, tags=[]):
     from app import app
 
+    _tags = tags if isinstance(tags, list) else [tags]
     msg = {
         'message': {
             'message': message,
             'signal': signal,
+            'tags': _tags,
         },
-        'tags': tags if isinstance(tags, list) else [tags],
+        'tags': _tags,
     }
 
     redis = StrictRedis(

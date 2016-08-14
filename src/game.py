@@ -46,7 +46,10 @@ class Game(object):
     @classmethod
     def load_game(cls, token):
         try:
-            game_id, color, enemy_token = get_cache(token)
+            data = get_cache(token)
+            if data == True:
+                raise errors.GameNotStartedError
+            game_id, color, enemy_token = data
             if color == consts.WHITE:
                 wt, bt = token, enemy_token
             elif color == consts.BLACK:
@@ -56,9 +59,12 @@ class Game(object):
             game.game = engine.Game(game.model.state, game.model.next_color)
             game._loaded_by = color
             if game.model.is_time_over():
-                game.send_ws('you lose by time', consts.WS_LOSE, color)
-                game.send_ws('you win by time', consts.WS_WIN, invert_color(color))
+                msg = self.get_info()
+                game.send_ws(msg, consts.WS_LOSE, color)
+                game.send_ws(msg, consts.WS_WIN, invert_color(color))
             game.check_draw()
+        except errors.GameNotStartedError:
+            raise
         except:
             raise errors.GameNotFoundError
         return game
@@ -76,13 +82,28 @@ class Game(object):
     @formatted
     def get_info(self, color=None):
         color = self.get_color(color)
+        if color == consts.WHITE:
+            opponent = self.model.player_black
+        else:
+            opponent = self.model.player_white
+        if self.model.ended:
+            return {
+                'board': BoardSerializer(self.game.board, consts.UNKNOWN).calc(),
+                'started_at': self.model.date_created,
+                'ended_at': self.model.date_end,
+                'color': consts.COLORS[color],
+                'opponent': opponent.username if opponent else 'anonymous',
+                'winner': self.model.get_winner(),
+            }
         return {
             'board': self.get_board(color),
             'time_left': self.time_left(color),
             'enemy_time_left': self.time_left(invert_color(color)),
             'started_at': self.model.date_created,
             'ended_at': self.model.date_end,
-            'next_turn': consts.COLORS[self.game.current_player]
+            'next_turn': consts.COLORS[self.game.current_player],
+            'color': consts.COLORS[color],
+            'opponent': opponent.username if opponent else 'anonymous',
         }
 
     def time_left(self, color=None):
@@ -107,19 +128,11 @@ class Game(object):
             logger.error(exc)
             return send_error('system error')
         self.onMove()
-        if game_over:
-            msg = {
-                'number': num,
-                'move': move,
-            }
-            self.send_ws(msg, consts.WS_MOVE, invert_color(color))
-            self.send_ws('you lose', consts.WS_LOSE, invert_color(color))
-            return send_message('you win')
         msg = self.get_info(invert_color(color))
-        msg.update({
-            'number': num,
-            'move': move,
-        })
+        msg.update({'number': num})
+        if game_over:
+            self.send_ws(msg, consts.WS_LOSE, invert_color(color))
+            return send_data(self.get_info())
         self.send_ws(msg, consts.WS_MOVE, invert_color(color))
         return send_data(self.get_info())
 
@@ -140,7 +153,7 @@ class Game(object):
         color = self.get_color(color)
         set_cache(self._get_draw_name(color), True)
         if self.check_draw():
-            return send_message('game over')
+            return send_data(self.get_info())
         self.send_ws('opponent offered draw', consts.WS_DRAW_REQUEST, invert_color(color))
         return send_success()
 
@@ -160,20 +173,22 @@ class Game(object):
                 self.model.game_over(consts.END_DRAW)
                 delete_cache(name1)
                 delete_cache(name2)
-                self.send_ws('game over', consts.WS_DRAW, consts.WHITE)
-                self.send_ws('game over', consts.WS_DRAW, consts.BLACK)
+                msg = self.get_info()
+                self.send_ws(msg, consts.WS_DRAW, consts.WHITE)
+                self.send_ws(msg, consts.WS_DRAW, consts.BLACK)
                 self.onMove()
                 return True
         return False
 
     def resign(self, color=None):
-        winner = invert_color(self.get_color(color))
         if self.model.ended:
             return send_error('game is over')
+        winner = invert_color(self.get_color(color))
         self.model.game_over(consts.END_RESIGN, winner=winner)
-        self.send_ws('you win', consts.WS_WIN, winner)
+        msg = self.get_info()
+        self.send_ws(msg, consts.WS_WIN, winner)
         self.onMove()
-        return send_success()
+        return send_data(msg)
 
     def moves(self, color=None):
         if not self.model.ended:

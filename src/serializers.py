@@ -48,8 +48,9 @@ class BoardSerializer(BaseSerializer):
     def calc(self):
         data = {}
         if self._color == UNKNOWN:
-            raise AttributeError('color is not specified')
-        figures = [f for f in self._model.figures if f.color == self._color]
+            figures = [f for f in self._model.figures]
+        else:
+            figures = [f for f in self._model.figures if f.color == self._color]
         cells = reduce(lambda a, b: a + b, [f.getVisibleCells() for f in figures])
         for cell in cells:
             data[pos2coors(*cell)] = FigureSerializer(self._model.cell2Figure(*cell)).calc()
