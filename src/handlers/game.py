@@ -3,7 +3,10 @@ from flask import request, Blueprint
 import consts
 from serializers import send_data, send_error
 from decorators import with_game, use_cache, authenticated, validated
-from cache import add_to_queue, get_from_queue, get_from_any_queue, set_cache, get_cache
+from cache import (
+    add_to_queue, get_from_queue, get_from_any_queue, set_cache, get_cache,
+    delete_cache
+)
 from helpers import generate_token, get_prefix
 from game import Game
 from models import User
@@ -59,12 +62,13 @@ def new(data):
             enemy_token, token, game_type, game_limit,
             white_user=enemy_user, black_user=request.user
         )
+        delete_cache('wait_{}'.format(token))
         result.update(game.get_info(consts.BLACK))
     else:
         add_to_queue(token, queue_prefix)
         if request.user:
             set_cache('user_{}'.format(token), request.user.pk, 3600)
-        set_cache(token, True)
+        set_cache('wait_{}'.format(token), (game_type, game_limit))
     return send_data(result)
 
 
@@ -81,7 +85,7 @@ def invite(data):
     set_cache('invite_{}'.format(token_invite), (token_game, game_type, game_limit))
     if request.user:
         set_cache('user_{}'.format(token_game), request.user.pk, 3600)
-    set_cache(token, True)
+    set_cache('wait_{}'.format(token_game), (game_type, game_limit, token_invite))
     return send_data({
         'game': token_game,
         'invite': token_invite,
@@ -107,6 +111,7 @@ def invited(token):
         enemy_token, user_token, game_type, game_limit,
         white_user=enemy_user, black_user=request.user
     )
+    delete_cache('wait_{}'.format(enemy_token))
     result = {'game': user_token}
     result.update(game.get_info(consts.BLACK))
     return send_data(result)

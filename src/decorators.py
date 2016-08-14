@@ -4,9 +4,10 @@ from flask import request
 
 import config
 import errors
+import consts
 from models import User
 from cache import get_cache, set_cache, get_cache_func_name
-from serializers import send_error, send_message
+from serializers import send_error, send_data
 from format import format
 
 
@@ -49,7 +50,13 @@ def with_game(f):
         try:
             game = Game.load_game(token)
         except errors.GameNotStartedError as exc:
-            return send_message(exc.message)
+            data = {
+                'type': consts.TYPES[exc.type]['name'],
+                'limit': exc.limit,
+            }
+            if (exc.token):
+                data['invite'] = exc.token
+            return send_data(data)
         except errors.GameNotFoundError as exc:
             return send_error(exc.message)
         return f(game, *args, **kwargs)

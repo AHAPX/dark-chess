@@ -62,6 +62,11 @@ class GameNotFoundError(BaseException):
 class GameNotStartedError(BaseException):
     message = 'game not started'
 
+    def __init__(self, type=consts.TYPE_NOLIMIT, limit=None, token=None):
+        self.type = type
+        self.limit = limit
+        self.token = token
+
 
 class TooOftenRequestError(BaseArgException):
     message = 'too often requests, try again after {} seconds'

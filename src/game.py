@@ -47,8 +47,8 @@ class Game(object):
     def load_game(cls, token):
         try:
             data = get_cache(token)
-            if data == True:
-                raise errors.GameNotStartedError
+            if not data:
+                raise errors.GameNotStartedError(*get_cache('wait_{}'.format(token)))
             game_id, color, enemy_token = data
             if color == consts.WHITE:
                 wt, bt = token, enemy_token
