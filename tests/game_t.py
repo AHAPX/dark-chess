@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import patch, call
 from datetime import datetime
 
+import models
+import errors
 from tests.base import TestCaseDB
 from consts import (
     WHITE, BLACK, TYPE_NOLIMIT, KING,
@@ -10,9 +12,8 @@ from consts import (
 )
 from game import Game
 from cache import get_cache, set_cache
-import models
-import errors
 from format import format
+from engine import Board
 
 
 class TestGameInit(TestCaseDB):
@@ -329,3 +330,71 @@ class TestGame(TestCaseDB):
             Game.load_game('1234').moves()
             Game.load_game('qwer').moves()
             mock.assert_has_calls([call(expect), call(expect)])
+
+    @patch('game.send_data')
+    def test_check_castles_1(self, send_data):
+        # white: move king and check castles
+        self.game.game.board = Board('Ke1,Ra1,Rh1,ke8')
+        king = self.game.game.board.getFigure(WHITE, KING)
+        self.game.check_castles()
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        self.game.move('e1', 'e2', WHITE)
+        self.game.check_castles()
+        self.assertFalse(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+
+    @patch('game.send_data')
+    def test_check_castles_2(self, send_data):
+        # white: move rooks separately and check castles
+        self.game.game.board = Board('Ke1,Ra1,Rh1,ke8')
+        king = self.game.game.board.getFigure(WHITE, KING)
+        self.game.check_castles()
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        # move long castle rook
+        self.game.move('a1', 'a4', WHITE)
+        self.game.check_castles()
+        self.assertTrue(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+        # move short castle rook
+        self.game.move('e8', 'f7', BLACK)
+        self.game.move('h1', 'h8', WHITE)
+        self.game.check_castles()
+        self.assertFalse(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+
+    @patch('game.send_data')
+    def test_check_castles_3(self, send_data):
+        # black: move king and check castles
+        self.game.game.board = Board('Ke1,ra8,rh8,ke8')
+        self.game.move('e1', 'e2', WHITE)
+        king = self.game.game.board.getFigure(BLACK, KING)
+        self.game.check_castles()
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        self.game.move('e8', 'e7', BLACK)
+        self.game.check_castles()
+        self.assertFalse(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+
+    @patch('game.send_data')
+    def test_check_castles_4(self, send_data):
+        # black: move rooks separately and check castles
+        self.game.game.board = Board('Ke1,ra8,rh8,ke8')
+        self.game.move('e1', 'e2', WHITE)
+        king = self.game.game.board.getFigure(BLACK, KING)
+        self.game.check_castles()
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        # move long castle rook
+        self.game.move('a8', 'a4', BLACK)
+        self.game.check_castles()
+        self.assertTrue(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+        # move short castle rook
+        self.game.move('e2', 'f2', WHITE)
+        self.game.move('h8', 'h1', BLACK)
+        self.game.check_castles()
+        self.assertFalse(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))

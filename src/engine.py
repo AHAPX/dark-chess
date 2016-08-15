@@ -152,6 +152,19 @@ class Board(object):
     def moves(self):
         return self._moves
 
+    def denyCastle(self, color, short=None):
+        if short is None:
+            self.getFigure(color, KING)._moved = True
+            return
+        y = 1 if color == WHITE else 8
+        rook_x = 8 if short else 1
+        try:
+            rook = self.cell2Figure(x=rook_x, y=y)
+        except (NotFoundError, OutOfBoardError):
+            return
+        if rook:
+            rook._moved = True
+
 
 class Figure(object):
 
@@ -348,11 +361,10 @@ class King(Figure):
                 continue
             if not fig or self.isEnemy(fig):
                 moves.append((x, y))
-# TODO: add castles to moves and make fine checking of figure movings
-#       if self.can_castle(True):
-#           moves.append((self.x + 2, self.y))
-#       if self.can_castle(False):
-#           moves.append((self.x - 2, self.y))
+        if self.can_castle(True):
+            moves.append((self.x + 2, self.y))
+        if self.can_castle(False):
+            moves.append((self.x - 2, self.y))
         self._moves = moves
 
     def updateAura(self):
@@ -392,9 +404,9 @@ class King(Figure):
             cells = ((2, y), (3, y), (4, y))
         try:
             rook = self.board.cell2Figure(x=rook_x, y=y)
-            if not rook or rook.moved:
-                return False
         except (NotFoundError, OutOfBoardError):
+            return False
+        if not rook or rook.moved:
             return False
         for cell in cells:
             try:

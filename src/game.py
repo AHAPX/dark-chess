@@ -62,6 +62,7 @@ class Game(object):
                 game.send_ws(msg, consts.WS_LOSE, color)
                 game.send_ws(msg, consts.WS_WIN, invert_color(color))
             game.check_draw()
+            game.check_castles()
         except errors.GameNotStartedError:
             raise
         except:
@@ -202,3 +203,21 @@ class Game(object):
         for name in ('game_info_handler', 'game_moves_handler'):
             delete_cache(get_cache_func_name(name, token=self.white))
             delete_cache(get_cache_func_name(name, token=self.black))
+
+    def check_castles(self, color=None, log=False):
+        color = self.get_color(color)
+        if color == consts.WHITE:
+            king = 'K'
+            y = 1
+        else:
+            king = 'k'
+            y = 8
+        if self.model.moves.where(models.Move.figure == king).count():
+            self.game.board.denyCastle(color)
+        else:
+            if self.model.moves.where(models.Move.color == color,
+                    models.Move.move.startswith('a{}'.format(y))).count():
+                self.game.board.denyCastle(color, False)
+            if self.model.moves.where(models.Move.color == color,
+                    models.Move.move.startswith('h{}'.format(y))).count():
+                self.game.board.denyCastle(color, True)

@@ -139,6 +139,8 @@ class TestFiguresMoves(TestCaseBase):
         cases = [
             ('Ke4', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']),
             ('Ke4,Pd3,Rg2,nd5,re6', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd4']),
+            ('Ke1,Ra1,Rh1', ['c1', 'd1', 'd2', 'e2', 'f2', 'f1', 'g1']),
+            ('Ke1,Ra1,Rh1,nb1', ['d1', 'd2', 'e2', 'f2', 'f1', 'g1']),
         ]
         cases_vis = [
             ('Ke4', ['d5', 'e5', 'f5', 'f4', 'f3', 'e3', 'd3', 'd4']),
@@ -155,8 +157,8 @@ class TestKing(TestCaseBase):
         king = Board('Ke4,Pd3,Rf3,nd5,re6').getFigure(WHITE, KING)
         self.assertEqual(sorted(king.royalAura()), sorted(map(coors2pos, results)))
 
-    def test_can_castle_white(self):
-        # after move
+    def test_can_castle_1(self):
+        # check for white after move
         king = Board('Kd1,Rh1,ke8').getFigure(WHITE, KING)
         king.move(5, 1)
         self.assertFalse(king.can_castle())
@@ -178,8 +180,8 @@ class TestKing(TestCaseBase):
         king = Board('Ke1,Ra1,Bc1,ke8').getFigure(WHITE, KING)
         self.assertFalse(king.can_castle(False))
 
-    def test_can_castle_black(self):
-        # after move
+    def test_can_castle_2(self):
+        # check for black after move
         king = Board('Ke1,rh8,kd8').getFigure(BLACK, KING)
         king.move(5, 8)
         self.assertFalse(king.can_castle())
@@ -199,6 +201,44 @@ class TestKing(TestCaseBase):
         self.assertFalse(king.can_castle())
         # long castle with barrier
         king = Board('Ke1,ra8,bc8,ke8').getFigure(BLACK, KING)
+        self.assertFalse(king.can_castle(False))
+
+    def test_can_castle_3(self):
+        # white: deny castle separately and check it
+        king = Board('Ke1,Rh1,Ra1,ke8').getFigure(WHITE, KING)
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        king.board.denyCastle(WHITE, True)
+        self.assertFalse(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        king.board.denyCastle(WHITE, False)
+        self.assertFalse(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+        # white: deny castle both and check it
+        king = Board('Ke1,Rh1,Ra1,ke8').getFigure(WHITE, KING)
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        king.board.denyCastle(WHITE)
+        self.assertFalse(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+
+    def test_can_castle_4(self):
+        # black: deny castle separately and check it
+        king = Board('Ke1,rh8,ra8,ke8').getFigure(BLACK, KING)
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        king.board.denyCastle(BLACK, True)
+        self.assertFalse(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        king.board.denyCastle(BLACK, False)
+        self.assertFalse(king.can_castle(True))
+        self.assertFalse(king.can_castle(False))
+        # black: deny castle both and check it
+        king = Board('Ke1,rh8,ra8,ke8').getFigure(BLACK, KING)
+        self.assertTrue(king.can_castle(True))
+        self.assertTrue(king.can_castle(False))
+        king.board.denyCastle(BLACK)
+        self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))
 
     def test_castle_1(self):
