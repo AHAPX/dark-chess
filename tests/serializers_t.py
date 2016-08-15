@@ -5,7 +5,7 @@ from flask import Flask
 from tests.base import TestCaseBase
 import serializers
 from engine import Board
-from consts import WHITE, BLACK, KING
+from consts import UNKNOWN, WHITE, BLACK, KING
 from models import Move
 
 
@@ -77,6 +77,26 @@ class TestSerializer(TestCaseBase):
             expect = {
                 'rc': True, 'd8': {}, 'd7': {}, 'e7': {}, 'f7': {}, 'f8': {},
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
+            }
+            self.assertComprateDicts(data, expect)
+
+    def test_board_3(self):
+        with self.app.test_request_context():
+            board = Board('Pc2,Qd1,Nh6,ke8')
+            resp = serializers.BoardSerializer(board, UNKNOWN).to_json()
+            data = json.loads(resp.data.decode())
+            self.assertEqual(resp.status_code, 200)
+            self.assertTrue(data['rc'])
+            expect = {
+                'rc': True, 'b3': {}, 'c3': {}, 'c4': {}, 'd2': {}, 'd3': {},
+                'd4': {}, 'd5': {}, 'd6': {}, 'd7': {}, 'd8': {}, 'e2': {},
+                'e7': {}, 'f3': {}, 'g4': {}, 'h5': {}, 'g8': {}, 'g4': {},
+                'f5': {}, 'f7': {}, 'f8': {}, 'a1': {}, 'b1': {}, 'c1': {},
+                'e1': {}, 'f1': {}, 'g1': {}, 'h1': {},
+                'c2': {'kind': 'pawn', 'color': 'white', 'position': 'c2'},
+                'd1': {'kind': 'queen', 'color': 'white', 'position': 'd1'},
+                'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
+                'h6': {'kind': 'knight', 'color': 'white', 'position': 'h6'},
             }
             self.assertComprateDicts(data, expect)
 

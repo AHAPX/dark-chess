@@ -26,7 +26,7 @@ class TestConnections(TestCaseBase):
     def test_send_mail_template(self, send_mail, render_template):
         with app.test_request_context():
             send_mail_template('registration', ['user1@mail'])
-        send_mail.assert_called_once()
+        self.assertEqual(send_mail.call_count, 1)
         self.assertEqual(render_template.call_count, 3)
 
     @patch('connections.json.dumps')

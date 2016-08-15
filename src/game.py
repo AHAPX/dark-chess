@@ -5,8 +5,7 @@ import models
 import consts
 import errors
 from serializers import (
-    BoardSerializer, MoveSerializer,
-    send_error, send_message, send_success, send_data,
+    BoardSerializer, MoveSerializer, send_error, send_success, send_data,
 )
 from helpers import coors2pos, invert_color
 from cache import set_cache, get_cache, delete_cache, get_cache_func_name
@@ -59,7 +58,7 @@ class Game(object):
             game.game = engine.Game(game.model.state, game.model.next_color)
             game._loaded_by = color
             if game.model.is_time_over():
-                msg = self.get_info()
+                msg = game.get_info()
                 game.send_ws(msg, consts.WS_LOSE, color)
                 game.send_ws(msg, consts.WS_WIN, invert_color(color))
             game.check_draw()

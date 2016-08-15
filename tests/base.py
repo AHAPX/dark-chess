@@ -10,6 +10,7 @@ from peewee import SqliteDatabase, Model
 from fakeredis import FakeStrictRedis
 
 import cache
+import connections
 from models import User, Game, Move
 from app import app
 
@@ -35,6 +36,7 @@ class TestCaseCache(TestCaseBase):
     @classmethod
     def setUpClass(cls):
         cache.redis = FakeStrictRedis()
+        connections.StrictRedis = FakeStrictRedis
 
     def setUp(self):
         cache.redis.flushdb()

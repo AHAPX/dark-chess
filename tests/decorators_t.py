@@ -57,6 +57,16 @@ class TestDecorators(TestCaseDB):
         set_cache('qwer', (game.pk, consts.BLACK, '1234'))
         self.assertEqual(func('1234')[0][0].model.pk, game.pk)
         self.assertEqual(func('qwer')[0][0].model.pk, game.pk)
+        # waited game
+        set_cache('wait_5678', (consts.TYPE_FAST, 3600))
+        with patch('decorators.send_data') as mock:
+            func('5678')
+            mock.assert_called_once_with({'type': 'fast', 'limit': 3600})
+        # invited game
+        set_cache('wait_asdf', (consts.TYPE_FAST, 3600, 'zxcv'))
+        with patch('decorators.send_data') as mock:
+            func('asdf')
+            mock.assert_called_once_with({'type': 'fast', 'limit': 3600, 'invite': 'zxcv'})
 
     def test_formatted(self):
         func = formatted(lambda a: a)

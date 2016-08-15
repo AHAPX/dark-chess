@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import config
 import errors
 from tests.base import TestCaseDB
-from consts import WHITE, BLACK, TYPE_SLOW, TYPE_FAST
+from consts import WHITE, BLACK, TYPE_SLOW, TYPE_FAST, END_CHECKMATE, END_DRAW
 from models import User, Game, Move
 from cache import get_cache, set_cache
 
@@ -102,6 +102,7 @@ class TestModelsGame(TestCaseDB):
         # add move with ending game
         game.add_move('k', 'e8-e7', 'Ke2,ke7', True)
         self.assertTrue(game.ended)
+        self.assertEqual(game.winner, BLACK)
 
     def test_game_over_1(self):
         # add game and check it
@@ -110,10 +111,11 @@ class TestModelsGame(TestCaseDB):
         self.assertIsNone(game.end_reason)
         self.assertIsNone(game.date_end)
         # game over with saving
-        game.game_over(1)
+        game.game_over(END_CHECKMATE)
         self.assertTrue(game.ended)
         self.assertEqual(game.end_reason, 1)
         self.assertIsNotNone(game.date_end)
+        self.assertIsNone(game.winner)
         # reload game
         game = Game.get(pk=game.pk)
         self.assertTrue(game.ended)
@@ -127,15 +129,17 @@ class TestModelsGame(TestCaseDB):
         self.assertIsNone(game.end_reason)
         self.assertIsNone(game.date_end)
         # game over without saving
-        game.game_over(1, datetime(2015, 1, 27, 12, 0, 0), False)
+        game.game_over(END_CHECKMATE, datetime(2015, 1, 27, 12, 0, 0), False, WHITE)
         self.assertTrue(game.ended)
         self.assertEqual(game.end_reason, 1)
         self.assertEqual(game.date_end, datetime(2015, 1, 27, 12, 0, 0))
+        self.assertEqual(game.winner, WHITE)
         # reload game
         game = Game.get(pk=game.pk)
         self.assertFalse(game.ended)
         self.assertIsNone(game.end_reason)
         self.assertIsNone(game.date_end)
+        self.assertIsNone(game.winner)
 
     def test_time_left_1(self):
         # add game, moves and check them
@@ -160,6 +164,7 @@ class TestModelsGame(TestCaseDB):
         game.date_state = datetime.now() - timedelta(seconds=10)
         self.assertTrue(game.is_time_over())
         self.assertTrue(game.ended)
+        self.assertEqual(game.winner, BLACK)
         self.assertFalse(game.is_time_over())
 
     def test_time_left_2(self):
@@ -185,6 +190,7 @@ class TestModelsGame(TestCaseDB):
         game.date_state = datetime.now() - timedelta(seconds=10)
         self.assertTrue(game.is_time_over())
         self.assertTrue(game.ended)
+        self.assertEqual(game.winner, BLACK)
         self.assertFalse(game.is_time_over())
 
     def test_time_left_3(self):
@@ -206,6 +212,7 @@ class TestModelsGame(TestCaseDB):
         self.assertIsNone(game.time_left(WHITE))
         self.assertIsNone(game.time_left(BLACK))
         self.assertFalse(game.is_time_over())
+        self.assertIsNone(game.winner)
 
     def test_get_moves_1(self):
         game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
@@ -214,3 +221,17 @@ class TestModelsGame(TestCaseDB):
         self.assertEqual([1], [g.pk for g in game.get_moves(WHITE)])
         self.assertEqual([2], [g.pk for g in game.get_moves(BLACK)])
         self.assertEqual([1, 2], [g.pk for g in game.get_moves()])
+
+    def test_get_winner_1(self):
+        # add game and finish without winner
+        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        self.assertIsNone(game.get_winner())
+        game.game_over(END_DRAW)
+        self.assertIsNone(game.get_winner())
+
+    def test_get_winner_2(self):
+        # add game and finish without winner
+        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        self.assertIsNone(game.get_winner())
+        game.game_over(END_CHECKMATE, winner=WHITE)
+        self.assertEqual(game.get_winner(), 'white')

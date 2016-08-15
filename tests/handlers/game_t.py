@@ -1,3 +1,5 @@
+import unittest
+
 from tests.base import TestCaseWeb
 from cache import get_cache
 from models import Game, User
@@ -60,7 +62,8 @@ class TestHandlerGame(TestCaseWeb):
         user2_token = data['game']
         expect = {
             'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {},
-            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white',
+            'color': {}, 'opponent': {},
         }
         self.assertComprateDicts(data, expect)
         # check game and cache
@@ -88,7 +91,8 @@ class TestHandlerGame(TestCaseWeb):
         data = self.load_data(resp)
         expect = {
             'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {},
-            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white',
+            'color': {}, 'opponent': {},
         }
         self.assertComprateDicts(data, expect)
 
@@ -100,7 +104,8 @@ class TestHandlerGame(TestCaseWeb):
         data = self.load_data(resp)
         expect = {
             'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {},
-            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white',
+            'color': {}, 'opponent': {},
         }
         self.assertComprateDicts(data, expect)
 
@@ -129,6 +134,7 @@ class TestHandlerGame(TestCaseWeb):
         self.assertIn(token2, get_cache(name).decode())
 
     def test_invite_1(self):
+        # validation error
         resp = self.client.post(self.url('invite'), data={'type': 'slow'})
         self.assertFalse(self.load_data(resp)['rc'])
 
@@ -144,7 +150,8 @@ class TestHandlerGame(TestCaseWeb):
         data = self.load_data(resp)
         expect = {
             'rc': True, 'board': {}, 'time_left': {}, 'enemy_time_left': {},
-            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white'
+            'started_at': {}, 'ended_at': None, 'game': {}, 'next_turn': 'white',
+            'color': {}, 'opponent': {},
         }
         self.assertComprateDicts(data, expect)
 
@@ -175,7 +182,8 @@ class TestHandlerGame(TestCaseWeb):
         resp = self.client.get(self.url('active'))
         self.assertEqual(self.load_data(resp), {'rc': True, 'games': [game1_w, game2_b]})
 
-    def test_game_info(self):
+    def test_game_info_1(self):
+        # start game and check info for both colors
         user_token1, user_token2 = self.new_game()
         # test first token
         resp = self.client.get(self.url('{}/info'.format(user_token1)))
@@ -183,6 +191,7 @@ class TestHandlerGame(TestCaseWeb):
         expect = {
             'rc': True, 'started_at': {}, 'ended_at': None, 'board': {},
             'time_left': {}, 'enemy_time_left': {}, 'next_turn': 'white',
+            'color': {}, 'opponent': {},
         }
         self.assertComprateDicts(data, expect)
         # test second token
@@ -191,8 +200,35 @@ class TestHandlerGame(TestCaseWeb):
         expect = {
             'rc': True, 'started_at': {}, 'ended_at': None, 'board': {},
             'time_left': {}, 'enemy_time_left': {}, 'next_turn': 'white',
+            'color': {}, 'opponent': {},
         }
         self.assertComprateDicts(data, expect)
+
+    def test_game_info_2(self):
+        # request new game and get info
+        resp = self.client.post(self.url('new'), data={'type': 'no limit'})
+        token = self.load_data(resp)['game']
+        resp = self.client.get(self.url('{}/info'.format(token)))
+        expect = {
+            'rc': True, 'type': 'no limit', 'limit': None,
+        }
+        self.assertEqual(self.load_data(resp), expect)
+
+    def test_game_info_3(self):
+        # request invited game and get info
+        resp = self.client.post(self.url('invite'), data={'type': 'no limit'})
+        data = self.load_data(resp)
+        token = data['game']
+        invite_token = data['invite']
+        resp = self.client.get(self.url('{}/info'.format(token)))
+        expect = {
+            'rc': True, 'type': 'no limit', 'limit': None,
+            'invite': invite_token,
+        }
+        self.assertEqual(self.load_data(resp), expect)
+        # shouldn't be info for invited token
+        resp = self.client.get(self.url('{}/info'.format(invite_token)))
+        self.assertFalse(self.load_data(resp)['rc'])
 
     def test_game_move_1(self):
         user_token1, user_token2 = self.new_game()
@@ -219,6 +255,7 @@ class TestHandlerGame(TestCaseWeb):
         expect = {
             'rc': True, 'started_at': {}, 'ended_at': None, 'board': {},
             'time_left': {}, 'enemy_time_left': {}, 'next_turn': 'black',
+            'color': {}, 'opponent': {},
         }
         self.assertComprateDicts(data, expect)
 
@@ -229,7 +266,10 @@ class TestHandlerGame(TestCaseWeb):
         self.assertEqual(self.load_data(resp), {'rc': True})
         resp = self.client.get(self.url('{}/draw/accept'.format(user_token2)))
         data = self.load_data(resp)
-        expect = {'rc': True, 'message': {}}
+        expect = {
+            'rc': True, 'started_at': {}, 'ended_at': {}, 'board': {},
+            'color': {}, 'opponent': {}, 'winner': None,
+        }
         self.assertComprateDicts(data, expect)
 
     def test_draw_refuse_1(self):
@@ -258,7 +298,11 @@ class TestHandlerGame(TestCaseWeb):
         user_token1, user_token2 = self.new_game()
         # resign game
         resp = self.client.get(self.url('{}/resign'.format(user_token1)))
-        self.assertEqual(self.load_data(resp), {'rc': True})
+        expect = {
+            'rc': True, 'started_at': {}, 'ended_at': {}, 'board': {},
+            'color': {}, 'opponent': {}, 'winner': 'black',
+        }
+        self.assertComprateDicts(self.load_data(resp), expect)
         # try to resign ended game
         resp = self.client.get(self.url('{}/resign'.format(user_token2)))
         data = self.load_data(resp)
