@@ -61,8 +61,9 @@ class Game(object):
                 msg = game.get_info()
                 game.send_ws(msg, consts.WS_LOSE, color)
                 game.send_ws(msg, consts.WS_WIN, invert_color(color))
-            game.check_draw()
-            game.check_castles()
+            if not game.model.ended:
+                game.check_draw()
+                game.check_castles()
         except errors.GameNotStartedError:
             raise
         except:

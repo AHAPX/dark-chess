@@ -56,6 +56,12 @@ class BoardSerializer(BaseSerializer):
             data[pos2coors(*cell)] = FigureSerializer(self._model.cell2Figure(*cell)).calc()
         for fig in figures:
             data[pos2coors(fig.x, fig.y)] = FigureSerializer(fig).calc()
+        if self._color == UNKNOWN:
+            for x in range(1, 9):
+                for y in range(1, 9):
+                    coor = pos2coors(x, y)
+                    if coor not in data:
+                        data[coor] = {}
         return data
 
 

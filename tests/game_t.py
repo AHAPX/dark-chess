@@ -360,6 +360,8 @@ class TestGame(TestCaseDB):
         # move short castle rook
         self.game.move('e8', 'f7', BLACK)
         self.game.move('h1', 'h8', WHITE)
+        self.game.move('f7', 'f6', BLACK)
+        self.game.move('a4', 'a1', WHITE)
         self.game.check_castles()
         self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))
@@ -395,6 +397,8 @@ class TestGame(TestCaseDB):
         # move short castle rook
         self.game.move('e2', 'f2', WHITE)
         self.game.move('h8', 'h1', BLACK)
+        self.game.move('f2', 'f3', WHITE)
+        self.game.move('a4', 'a8', BLACK)
         self.game.check_castles()
         self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))

@@ -16,7 +16,7 @@ class Board(object):
             self.loadFigures(figures)
         else:
             self.standFigures()
-        self.updateFigures()
+#       self.updateFigures()
 
     def standFigures(self):
         self._figures = {
@@ -72,6 +72,7 @@ class Board(object):
                 return fig
 
     def isProtected(self, x, y, color):
+        # deprecated because king can be cut
         if not onBoard(x, y):
             raise OutOfBoardError
         for fig in self.figures:
@@ -138,7 +139,7 @@ class Board(object):
             if isinstance(figs, list):
                 return figs[index]
             return figs
-        except:
+        except Exception as e:
             raise NotFoundError
 
     def castle(self, king, rook):
@@ -347,7 +348,6 @@ class Queen(Figure):
 
 class King(Figure):
     _symbol = 'K'
-    _aura = []
     kind = KING
 
     def updateMoves(self):
@@ -368,6 +368,7 @@ class King(Figure):
         self._moves = moves
 
     def updateAura(self):
+        # deprecated because king can be cut
         aura = []
         for dx, dy in KING_MOVES:
             x = self.x + dx
@@ -377,13 +378,10 @@ class King(Figure):
         self._aura = aura
 
     def royalAura(self):
+        # deprecated because king can be cut
         if self._aura is None:
             self.updateAura()
         return self._aura
-
-    def update(self):
-        super(King, self).update()
-        self.updateAura()
 
     def reset(self):
         super(King, self).reset()
@@ -441,7 +439,7 @@ class King(Figure):
         del self
 
     def getVisibleCells(self):
-        return self.royalAura()
+        return self.getMoves()
 
 
 class Game(object):
