@@ -186,10 +186,9 @@ class Game(object):
             return send_error('game is over')
         winner = invert_color(self.get_color(color))
         self.model.game_over(consts.END_RESIGN, winner=winner)
-        msg = self.get_info()
-        self.send_ws(msg, consts.WS_WIN, winner)
+        self.send_ws(self.get_info(winner), consts.WS_WIN, winner)
         self.onMove()
-        return send_data(msg)
+        return send_data(self.get_info())
 
     def moves(self, color=None):
         if not self.model.ended:
