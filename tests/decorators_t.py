@@ -44,7 +44,7 @@ class TestDecorators(TestCaseDB):
         request.user = User.create(username='user1', password='passwd')
         self.assertEqual(func(), 'success')
 
-    def test_with_game(self):
+    def test_with_game_1(self):
         func = with_game(lambda *a, **k: (a, k))
         # test decorator, tokens are not in cache
         with patch('decorators.send_error') as mock:
@@ -65,6 +65,21 @@ class TestDecorators(TestCaseDB):
         with patch('decorators.send_data') as mock:
             func('asdf')
             mock.assert_called_once_with({'type': 'fast', 'limit': 3600, 'invite': 'zxcv'})
+
+    @patch('decorators.request')
+    def test_with_game_2(self, request):
+        request.json.get.return_value = 'user_token'
+        # create game with white user and try to get it anonymously
+        func = authenticated(with_game(lambda *a, **k: (a, k)))
+        user = User.create(username='user1', password='passwd')
+        game = Game.create(white='1234', black='qwer', player_white=user)
+        with patch('decorators.send_error') as mock:
+            func('1234')
+            mock.assert_called_once_with('wrong user')
+        self.assertEqual(func('qwer')[0][0].model.pk, game.pk)
+        # set auth and check again
+        set_cache('user_token', user.pk)
+        self.assertEqual(func('1234')[0][0].model.pk, game.pk)
 
     def test_formatted(self):
         func = formatted(lambda a: a)

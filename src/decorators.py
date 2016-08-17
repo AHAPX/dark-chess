@@ -59,6 +59,12 @@ def with_game(f):
             return send_data(data)
         except errors.GameNotFoundError as exc:
             return send_error(exc.message)
+        if game._loaded_by == consts.WHITE:
+            if game.model.player_white is not None and game.model.player_white != request.user:
+                return send_error('wrong user')
+        else:
+            if game.model.player_black is not None and game.model.player_black != request.user:
+                return send_error('wrong user')
         return f(game, *args, **kwargs)
     return decorator
 

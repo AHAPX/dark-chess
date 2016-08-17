@@ -107,7 +107,12 @@ class Game(BaseModel):
 
     @classmethod
     def get_game(cls, token):
-        return cls.get((cls.white == token) | (cls.black == token))
+        game = cls.get((cls.white == token) | (cls.black == token))
+        if game.white == token:
+            game._loaded_by = consts.WHITE
+        else:
+            game._loaded_by = consts.BLACK
+        return game
 
     def add_move(self, figure, move, state, end_reason=None):
         with config.DB.atomic():

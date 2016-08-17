@@ -138,12 +138,14 @@ def active():
 
 @bp.route('/<token>/info')
 @use_cache(1, name='game_info_handler')
+@authenticated
 @with_game
 def info(game):
     return send_data(game.get_info())
 
 
 @bp.route('/<token>/move', methods=['POST'])
+@authenticated
 @with_game
 @validated(GameMoveValidator)
 def move(game, data):
@@ -153,18 +155,21 @@ def move(game, data):
 
 
 @bp.route('/<token>/draw/accept')
+@authenticated
 @with_game
 def draw_accept(game):
     return game.draw_accept()
 
 
 @bp.route('/<token>/draw/refuse')
+@authenticated
 @with_game
 def draw_refuse(game):
     return game.draw_refuse()
 
 
 @bp.route('/<token>/resign')
+@authenticated
 @with_game
 def resign(game):
     return game.resign()
@@ -172,6 +177,7 @@ def resign(game):
 
 @bp.route('/<token>/moves')
 @use_cache(name='game_moves_handler')
+@authenticated
 @with_game
 def moves(game):
     return game.moves()

@@ -53,18 +53,14 @@ class Game(object):
                 if data:
                     raise errors.GameNotStartedError(*data)
                 raise errors.GameNotFoundError
-            if game_model.white == token:
-                color = consts.WHITE
-            else:
-                color = consts.BLACK
             game = cls(game_model.white, game_model.black)
             game.model = game_model
             game.game = engine.Game(game.model.state, game.model.next_color)
-            game._loaded_by = color
+            game._loaded_by = game_model._loaded_by
             if game.model.is_time_over():
                 msg = game.get_info()
-                game.send_ws(msg, consts.WS_LOSE, color)
-                game.send_ws(msg, consts.WS_WIN, invert_color(color))
+                game.send_ws(msg, consts.WS_LOSE, game._loaded_by)
+                game.send_ws(msg, consts.WS_WIN, invert_color(game._loaded_by))
             if not game.model.ended:
                 game.check_draw()
                 game.check_castles()
