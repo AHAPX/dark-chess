@@ -70,8 +70,8 @@ class TestHandlerGame(TestCaseWeb):
         game = Game.get()
         self.assertIsNone(game.player_white)
         self.assertIsNone(game.player_black)
-        self.assertEqual(get_cache(user1_token), (game.pk, WHITE, user2_token))
-        self.assertEqual(get_cache(user2_token), (game.pk, BLACK, user1_token))
+        self.assertEqual(game.white, user1_token)
+        self.assertEqual(game.black, user2_token)
 
     def test_new_game_3(self):
         # case 2 with login

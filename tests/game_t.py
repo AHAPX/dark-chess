@@ -24,8 +24,6 @@ class TestGameInit(TestCaseDB):
         with patch('game.Game.send_ws') as mock:
             game = Game.new_game('1234', 'qwer', TYPE_NOLIMIT, None)
             self.assertIsInstance(game, Game)
-            self.assertEqual(get_cache('1234'), (game.model.pk, WHITE, 'qwer'))
-            self.assertEqual(get_cache('qwer'), (game.model.pk, BLACK, '1234'))
             mock.assert_has_calls([
                 call('info', WS_START, WHITE), call('info', WS_START, BLACK)
             ])
@@ -37,7 +35,7 @@ class TestGameInit(TestCaseDB):
         with self.assertRaises(errors.GameNotFoundError):
             Game.load_game('1234')
         # create game
-        model = models.Game.create()
+        model = models.Game.create(white='1234', black='qwer')
         set_cache('1234', (model.pk, WHITE, 'qwer'))
         set_cache('qwer', (model.pk, BLACK, '1234'))
         # load game for white player and check
@@ -58,7 +56,7 @@ class TestGame(TestCaseDB):
 
     def setUp(self):
         super(TestGame, self).__init__()
-        model = models.Game.create()
+        model = models.Game.create(white='1234', black='qwer')
         set_cache('1234', (model.pk, WHITE, 'qwer'))
         set_cache('qwer', (model.pk, BLACK, '1234'))
         self.game = Game.load_game('1234')

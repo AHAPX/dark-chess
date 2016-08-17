@@ -81,7 +81,7 @@ class TestModelsGame(TestCaseDB):
 
     def test_move(self):
         # add game and check it
-        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        game = Game.create(white='123', black='456', state='Ke1,ke8')
         self.assertTrue(abs((game.date_created - game.date_state).total_seconds()) < 1)
         self.assertEqual(game.next_color, WHITE)
         self.assertEqual(Game.select().count(), 1)
@@ -106,7 +106,7 @@ class TestModelsGame(TestCaseDB):
 
     def test_game_over_1(self):
         # add game and check it
-        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        game = Game.create(white='123', black='456', state='Ke1,ke8')
         self.assertFalse(game.ended)
         self.assertIsNone(game.end_reason)
         self.assertIsNone(game.date_end)
@@ -124,7 +124,7 @@ class TestModelsGame(TestCaseDB):
 
     def test_game_over_2(self):
         # add game and check it
-        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        game = Game.create(white='123', black='456', state='Ke1,ke8')
         self.assertFalse(game.ended)
         self.assertIsNone(game.end_reason)
         self.assertIsNone(game.date_end)
@@ -144,7 +144,7 @@ class TestModelsGame(TestCaseDB):
     def test_time_left_1(self):
         # add game, moves and check them
         game = Game.create(
-            player_white='123', player_black='456', state='Ke1,ke8',
+            white='123', black='456', state='Ke1,ke8',
             type_game=TYPE_FAST, time_limit=20
         )
         Move.create(game=game, number=1, figure='K', move='e1-e2', time_move=9, color=WHITE)
@@ -170,7 +170,7 @@ class TestModelsGame(TestCaseDB):
     def test_time_left_2(self):
         # add game, moves and check them
         game = Game.create(
-            player_white='123', player_black='456', state='Ke1,ke8',
+            white='123', black='456', state='Ke1,ke8',
             type_game=TYPE_SLOW, time_limit=10
         )
         Move.create(game=game, number=1, figure='K', move='e1-e2', time_move=9, color=WHITE)
@@ -196,7 +196,7 @@ class TestModelsGame(TestCaseDB):
     def test_time_left_3(self):
         # add game, moves and check them
         game = Game.create(
-            player_white='123', player_black='456', state='Ke1,ke8',
+            white='123', black='456', state='Ke1,ke8',
             time_limit=10
         )
         Move.create(game=game, number=1, figure='K', move='e1-e2', time_move=9, color=WHITE)
@@ -215,7 +215,7 @@ class TestModelsGame(TestCaseDB):
         self.assertIsNone(game.winner)
 
     def test_get_moves_1(self):
-        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        game = Game.create(white='123', black='456', state='Ke1,ke8')
         game.add_move('K', 'e1-e2', 'Ke2,ke8')
         game.add_move('k', 'e8-e7', 'Ke2,ke7')
         self.assertEqual([1], [g.pk for g in game.get_moves(WHITE)])
@@ -224,14 +224,14 @@ class TestModelsGame(TestCaseDB):
 
     def test_get_winner_1(self):
         # add game and finish without winner
-        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        game = Game.create(white='123', black='456', state='Ke1,ke8')
         self.assertIsNone(game.get_winner())
         game.game_over(END_DRAW)
         self.assertIsNone(game.get_winner())
 
     def test_get_winner_2(self):
         # add game and finish without winner
-        game = Game.create(player_white='123', player_black='456', state='Ke1,ke8')
+        game = Game.create(white='123', black='456', state='Ke1,ke8')
         self.assertIsNone(game.get_winner())
         game.game_over(END_CHECKMATE, winner=WHITE)
         self.assertEqual(game.get_winner(), 'white')

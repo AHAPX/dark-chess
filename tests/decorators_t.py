@@ -52,9 +52,7 @@ class TestDecorators(TestCaseDB):
             self.assertEqual(func('1234'), '_error')
             mock.assert_called_once_with('game not found')
         # test decorator, tokens are in cache
-        game = Game.create()
-        set_cache('1234', (game.pk, consts.WHITE, 'qwer'))
-        set_cache('qwer', (game.pk, consts.BLACK, '1234'))
+        game = Game.create(white='1234', black='qwer')
         self.assertEqual(func('1234')[0][0].model.pk, game.pk)
         self.assertEqual(func('qwer')[0][0].model.pk, game.pk)
         # waited game
@@ -97,7 +95,7 @@ class TestDecorators(TestCaseDB):
             return 'ok'
 
         func = use_cache(10, name='test_func')(_func)
-        a, b = Game.create(), delete_cache
+        a, b = Game.create(white='1234', black='qwer'), delete_cache
         # run first time, no cache
         with patch('tests.decorators_t.invert_color') as mock:
             self.assertEqual(func(a, b=b), 'ok')

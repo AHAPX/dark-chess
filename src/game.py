@@ -29,15 +29,16 @@ class Game(object):
         game = cls(white_token, black_token)
         game.game = engine.Game()
         game.model = models.Game.create(
+            white = white_token,
+            black = black_token,
             player_white=white_user,
             player_black=black_user,
             state=str(game.game.board),
             type_game=type_game,
             time_limit=time_limit,
         )
-        set_cache(white_token, (game.model.pk, consts.WHITE, black_token))
-        set_cache(black_token, (game.model.pk, consts.BLACK, white_token))
-        set_cache('game_{}'.format(game.model.pk), (white_token, black_token))
+        delete_cache('wait_{}'.format(white_token))
+        delete_cache('wait_{}'.format(black_token))
         game.send_ws(game.get_info(consts.WHITE), consts.WS_START, consts.WHITE)
         game.send_ws(game.get_info(consts.BLACK), consts.WS_START, consts.BLACK)
         return game
@@ -45,16 +46,19 @@ class Game(object):
     @classmethod
     def load_game(cls, token):
         try:
-            data = get_cache(token)
-            if not data:
-                raise errors.GameNotStartedError(*get_cache('wait_{}'.format(token)))
-            game_id, color, enemy_token = data
-            if color == consts.WHITE:
-                wt, bt = token, enemy_token
-            elif color == consts.BLACK:
-                wt, bt = enemy_token, token
-            game = cls(wt, bt)
-            game.model = models.Game.get(pk=game_id)
+            try:
+                game_model = models.Game.get_game(token)
+            except models.Game.DoesNotExist:
+                data = get_cache('wait_{}'.format(token))
+                if data:
+                    raise errors.GameNotStartedError(*data)
+                raise errors.GameNotFoundError
+            if game_model.white == token:
+                color = consts.WHITE
+            else:
+                color = consts.BLACK
+            game = cls(game_model.white, game_model.black)
+            game.model = game_model
             game.game = engine.Game(game.model.state, game.model.next_color)
             game._loaded_by = color
             if game.model.is_time_over():

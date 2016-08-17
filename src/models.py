@@ -91,6 +91,8 @@ class User(BaseModel):
 
 class Game(BaseModel):
     pk = peewee.PrimaryKeyField()
+    white = peewee.CharField()
+    black = peewee.CharField()
     player_white = peewee.ForeignKeyField(User, related_name='games_white', null=True)
     player_black = peewee.ForeignKeyField(User, related_name='games_black', null=True)
     date_created = peewee.DateTimeField(default=datetime.now)
@@ -102,6 +104,10 @@ class Game(BaseModel):
     time_limit = peewee.IntegerField(null=True)
     end_reason = peewee.IntegerField(null=True)
     winner = peewee.IntegerField(null=True)
+
+    @classmethod
+    def get_game(cls, token):
+        return cls.get((cls.white == token) | (cls.black == token))
 
     def add_move(self, figure, move, state, end_reason=None):
         with config.DB.atomic():

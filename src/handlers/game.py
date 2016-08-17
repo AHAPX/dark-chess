@@ -129,15 +129,10 @@ def active():
             (Game.player_white == request.user) | (Game.player_black == request.user),
         )
         for game in games:
-            try:
-                white_token, black_token = get_cache('game_{}'.format(game.pk))
-            except:
-                pass
+            if game.player_white == request.user:
+                result['games'].append(game.white)
             else:
-                if game.player_white == request.user:
-                    result['games'].append(white_token)
-                else:
-                    result['games'].append(black_token)
+                result['games'].append(game.black)
     return send_data(result)
 
 
