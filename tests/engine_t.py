@@ -288,6 +288,31 @@ class TestKing(TestCaseBase):
         self.assertEqual(king.try_to_castle(3, 8), '0-0-0')
 
 
+class TestPawn(TestCaseBase):
+
+    def test_move_1(self):
+        game = Game('Pc7,Ke1,ke8')
+        self.assertEqual(str(game.board.getFigure(WHITE, PAWN)), 'Pc7')
+        with self.assertRaises(errors.NotFoundError):
+            game.board.getFigure(WHITE, QUEEN)
+        game.move(WHITE, (3, 7), (3, 8))
+        self.assertEqual(str(game.board), 'Ke1,ke8,Qc8')
+        self.assertEqual(str(game.board.getFigure(WHITE, QUEEN)), 'Qc8')
+        with self.assertRaises(errors.NotFoundError):
+            game.board.getFigure(WHITE, PAWN)
+
+    def test_move_2(self):
+        game = Game('pc2,Ke1,ke8', BLACK)
+        self.assertEqual(str(game.board.getFigure(BLACK, PAWN)), 'pc2')
+        with self.assertRaises(errors.NotFoundError):
+            game.board.getFigure(BLACK, QUEEN)
+        game.move(BLACK, (3, 2), (3, 1))
+        self.assertEqual(str(game.board), 'Ke1,ke8,qc1')
+        self.assertEqual(str(game.board.getFigure(BLACK, QUEEN)), 'qc1')
+        with self.assertRaises(errors.NotFoundError):
+            game.board.getFigure(BLACK, PAWN)
+
+
 class TestGame(TestCaseBase):
 
     def test_move(self):

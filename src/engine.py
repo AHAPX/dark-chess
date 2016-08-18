@@ -166,6 +166,13 @@ class Board(object):
         if rook:
             rook._moved = True
 
+    def transform(self, pawn):
+        queen = Queen(pawn.x, pawn.y, pawn.color, self)
+        self._figures[pawn.color][QUEEN].append(queen)
+        self._figure_list.append(queen)
+        self._figure_list.remove(pawn)
+        pawn.terminate()
+
 
 class Figure(object):
 
@@ -302,6 +309,11 @@ class Pawn(Figure):
                 cells.append((self.x, self.y - 1))
             cells += [(self.x - 1, self.y - 1), (self.x + 1, self.y - 1)]
         return [cell for cell in cells if onBoard(*cell)]
+
+    def move(self, x, y):
+        super(Pawn, self).move(x, y)
+        if (self.color == WHITE and y == 8) or (self.color == BLACK and y == 1):
+            self.board.transform(self)
 
 
 class Bishop(Figure):
