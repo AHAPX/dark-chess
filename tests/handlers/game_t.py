@@ -159,7 +159,7 @@ class TestHandlerGame(TestCaseWeb):
         resp = self.client.get(self.url('invite/token'), data={'type': 'slow'})
         self.assertFalse(self.load_data(resp)['rc'])
 
-    def test_active(self):
+    def test_games(self):
         # create user1 and invite
         self.login(*self.add_user('user1', 'password', None))
         resp = self.client.post(self.url('invite'), data={'type': 'no limit'})
@@ -173,14 +173,22 @@ class TestHandlerGame(TestCaseWeb):
         data = self.load_data(resp)
         game2_w = data['game']
         # check games of user2
-        resp = self.client.get(self.url('active'))
-        self.assertEqual(self.load_data(resp), {'rc': True, 'games': [game1_b]})
+        resp = self.client.get(self.url('games'))
+        expect = {
+            'rc': True,
+            'games': {'actives': [game1_b], 'ended': []},
+        }
+        self.assertEqual(self.load_data(resp), expect)
         # login as user1, accept invite and check games
         self.login('user1', 'password')
         resp = self.client.get(self.url('invite/{}'.format(data['invite'])))
         game2_b = self.load_data(resp)['game']
-        resp = self.client.get(self.url('active'))
-        self.assertEqual(self.load_data(resp), {'rc': True, 'games': [game1_w, game2_b]})
+        resp = self.client.get(self.url('games'))
+        expect = {
+            'rc': True,
+            'games': {'actives': [game1_w, game2_b], 'ended': []},
+        }
+        self.assertEqual(self.load_data(resp), expect)
 
     def test_game_info_1(self):
         # start game and check info for both colors

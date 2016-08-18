@@ -117,12 +117,17 @@ def invited(token):
     return send_data(result)
 
 
-@bp.route('/active')
+@bp.route('/games')
 @authenticated
-def active():
+def games():
     from models import Game
 
-    result = {'games': []}
+    result = {
+        'games': {
+            'actives': [],
+            'ended': [],
+        }
+    }
     if request.user:
         games = Game.select().where(
             Game.date_end == None,
@@ -130,9 +135,18 @@ def active():
         )
         for game in games:
             if game.player_white == request.user:
-                result['games'].append(game.white)
+                result['games']['actives'].append(game.white)
             else:
-                result['games'].append(game.black)
+                result['games']['actives'].append(game.black)
+        games = Game.select().where(
+            Game.date_end != None,
+            (Game.player_white == request.user) | (Game.player_black == request.user),
+        ).limit(10)
+        for game in games:
+            if game.player_white == request.user:
+                result['games']['ended'].append(game.white)
+            else:
+                result['games']['ended'].append(game.black)
     return send_data(result)
 
 
