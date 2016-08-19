@@ -7,6 +7,8 @@ DEBUG = False
 
 # url
 SITE_URL = 'http://localhost'
+VERIFY_URL = '/#/auth/verify/'
+RECOVER_URL = '/#/auth/recover/'
 
 # dark-chess server config
 HOST = '0.0.0.0'

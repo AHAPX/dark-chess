@@ -1,3 +1,3 @@
 Hello, {{username}}
-If you claimed to reset password, open {{site_url}}/auth/recover/{{token}}
+If you claimed to reset password, open {{url}}{{token}}
 If you didn't just ignore this email

@@ -1,4 +1,5 @@
 import datetime
+from urllib.parse import urljoin
 
 from flask import request, make_response, Blueprint, abort
 
@@ -26,6 +27,7 @@ def register(data):
         token = user.get_verification()
         data = {
             'username': username,
+            'url': urljoin(config.SITE_URL, config.VERIFY_URL),
             'token': token,
         }
         send_mail_template('registration', [email], data=data)
@@ -42,6 +44,7 @@ def get_verification():
         return send_error(exc.message)
     data = {
         'username': request.user.username,
+        'url': urljoin(config.SITE_URL, config.VERIFY_URL),
         'token': token,
     }
     send_mail_template('verification', [request.user.email], data=data)
@@ -70,6 +73,7 @@ def reset(data):
         token = user.get_reset()
         data = {
             'username': user.username,
+            'url': urljoin(config.SITE_URL, config.RECOVER_URL),
             'token': token,
         }
         send_mail_template('reset', [user.email], data=data)

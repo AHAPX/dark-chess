@@ -3,6 +3,7 @@ from unittest.mock import patch
 from tests.base import TestCaseWeb
 from models import User
 from cache import get_cache
+import config
 
 
 class TestHandlerAuth(TestCaseWeb):
@@ -53,6 +54,7 @@ class TestHandlerAuth(TestCaseWeb):
             self.assertIn('message', data)
             mock.assert_called_once_with('registration', ['user1@fakemail'], data={
                 'username': 'user1',
+                'url': '{}{}'.format(config.SITE_URL, config.VERIFY_URL),
                 'token': 'token'
             })
 
@@ -115,6 +117,7 @@ class TestHandlerAuth(TestCaseWeb):
             resp = self.client.get(self.url('verification'))
             mock.assert_called_once_with('verification', ['user1@fakemail'], data={
                 'username': 'user1',
+                'url': '{}{}'.format(config.SITE_URL, config.VERIFY_URL),
                 'token': 'token',
             })
         self.assertTrue(self.load_data(resp)['rc'])
@@ -178,6 +181,7 @@ class TestHandlerAuth(TestCaseWeb):
             resp = self.client.post(self.url('reset'), data={'email': 'user1@fakemail'})
             mock.assert_called_once_with('reset', ['user1@fakemail'], data={
                 'username': 'user1',
+                'url': '{}{}'.format(config.SITE_URL, config.RECOVER_URL),
                 'token': 'token',
             })
             self.assertTrue(self.load_data(resp)['rc'])
