@@ -58,9 +58,10 @@ class Game(object):
             game.game = engine.Game(game.model.state, game.model.next_color, game.model.cut)
             game._loaded_by = game_model._loaded_by
             if game.model.is_time_over():
-                msg = game.get_info()
-                game.send_ws(msg, consts.WS_LOSE, game._loaded_by)
-                game.send_ws(msg, consts.WS_WIN, invert_color(game._loaded_by))
+                winner = game.model.winner
+                loser = invert_color(winner)
+                game.send_ws(game.get_info(loser), consts.WS_LOSE, loser)
+                game.send_ws(game.get_info(winner), consts.WS_WIN, winner)
             if not game.model.ended:
                 game.check_draw()
                 game.check_castles()

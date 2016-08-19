@@ -27,7 +27,7 @@ def types():
             'name': k,
             'title': v[0],
         } for k, v in sorted(t['periods'].items(), key=lambda a: a[1][1])],
-    } for t in consts.TYPES.values()]
+    } for t in consts.TYPES.values() if t['name'] != 'no limit']
     return send_data({'types': types})
 
 

@@ -62,13 +62,13 @@ TYPES = {
             '3d': ('3 days', 3 * 24 * 60 * 60),
             '7d': ('7 days', 7 * 24 * 60 * 60),
             '15d': ('15 days', 15 * 24 * 60 * 60),
+            '30d': ('30 days', 30 * 24 * 60 * 60),
         },
     },
     TYPE_FAST: {
         'name': 'fast',
-        'description': 'short game, time limit for game',
+        'description': 'short game, time limit for game, moves do not reset timer',
         'periods': {
-            '1m': ('1 minute', 1 * 60),
             '5m': ('5 minutes', 5 * 60),
             '10m': ('10 minutes', 10 * 60),
             '30m': ('30 minutes', 30 * 60),

@@ -43,6 +43,8 @@ class TestGameInit(TestCaseDB):
         with patch('models.Game.is_time_over') as mock,\
                 patch('game.Game.send_ws') as mock1:
             mock.return_value = True
+            model.winner = WHITE
+            model.save()
             game = Game.load_game('qwer')
             mock1.assert_has_calls([
                 call('info', WS_LOSE, BLACK),

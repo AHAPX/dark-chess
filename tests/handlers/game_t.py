@@ -24,9 +24,11 @@ class TestHandlerGame(TestCaseWeb):
     def test_types(self):
         resp = self.client.get(self.url('types'))
         data = self.load_data(resp)
-        self.assertEqual(len(data['types']), len(TYPES.items()))
+        self.assertEqual(len(data['types']), len(TYPES.items()) - 1)
         index = 0
         for key in TYPES.keys():
+            if key == TYPE_NOLIMIT:
+                continue
             self.assertEqual(len(data['types'][index]['periods']), len(TYPES[key]['periods']))
             index += 1
 
