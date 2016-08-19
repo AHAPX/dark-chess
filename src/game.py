@@ -55,7 +55,7 @@ class Game(object):
                 raise errors.GameNotFoundError
             game = cls(game_model.white, game_model.black)
             game.model = game_model
-            game.game = engine.Game(game.model.state, game.model.next_color)
+            game.game = engine.Game(game.model.state, game.model.next_color, game.model.cut)
             game._loaded_by = game_model._loaded_by
             if game.model.is_time_over():
                 msg = game.get_info()
@@ -128,6 +128,9 @@ class Game(object):
         except Exception as exc:
             logger.error(exc)
             return send_error('system error')
+        if self.game.board._cut:
+            self.model.cut += self.game.board._cut.symbol
+            self.model.save()
         self.onMove()
         msg = self.get_info(invert_color(color))
         msg.update({'number': num})

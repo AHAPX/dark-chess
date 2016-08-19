@@ -62,6 +62,12 @@ class BoardSerializer(BaseSerializer):
                     coor = pos2coors(x, y)
                     if coor not in data:
                         data[coor] = {}
+        data['cuts'] = []
+        for fig in self._model.cuts:
+            data['cuts'].append({
+                'kind': FIGURES[fig[0]],
+                'color': COLORS[fig[1]],
+            })
         return data
 
 

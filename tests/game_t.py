@@ -6,12 +6,12 @@ import models
 import errors
 from tests.base import TestCaseDB
 from consts import (
-    WHITE, BLACK, TYPE_NOLIMIT, KING,
+    WHITE, BLACK, TYPE_NOLIMIT, PAWN, KING,
     WS_START, WS_MOVE, WS_DRAW, WS_LOSE, WS_WIN, WS_DRAW_REQUEST,
     END_DRAW, END_RESIGN, END_CHECKMATE
 )
 from game import Game
-from cache import get_cache, set_cache
+from cache import get_cache
 from format import format
 from engine import Board
 
@@ -36,8 +36,6 @@ class TestGameInit(TestCaseDB):
             Game.load_game('1234')
         # create game
         model = models.Game.create(white='1234', black='qwer')
-        set_cache('1234', (model.pk, WHITE, 'qwer'))
-        set_cache('qwer', (model.pk, BLACK, '1234'))
         # load game for white player and check
         game = Game.load_game('1234')
         self.assertEqual(game.model.pk, model.pk)
@@ -57,8 +55,6 @@ class TestGame(TestCaseDB):
     def setUp(self):
         super(TestGame, self).__init__()
         model = models.Game.create(white='1234', black='qwer')
-        set_cache('1234', (model.pk, WHITE, 'qwer'))
-        set_cache('qwer', (model.pk, BLACK, '1234'))
         self.game = Game.load_game('1234')
 
     def test_get_color(self):
@@ -400,3 +396,20 @@ class TestGame(TestCaseDB):
         self.game.check_castles()
         self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))
+
+    @patch('game.send_data')
+    def test_cuts(self, send_data):
+        # do moves and check cuts
+        self.game.move('e2', 'e4', WHITE)
+        self.assertIsNone(self.game.game.board.lastCut)
+        self.assertEqual(self.game.game.board.cuts, [])
+        self.game.move('d7', 'd5', BLACK)
+        self.assertIsNone(self.game.game.board.lastCut)
+        self.assertEqual(self.game.game.board.cuts, [])
+        self.game.move('e4', 'd5', WHITE)
+        self.assertIsNotNone(self.game.game.board.lastCut)
+        self.assertEqual(self.game.game.board.cuts, [(PAWN, BLACK)])
+        # load game and check cuts
+        game = Game.load_game(self.game.model.white)
+        self.assertIsNone(game.game.board.lastCut)
+        self.assertEqual(game.game.board.cuts, [(PAWN, BLACK)])

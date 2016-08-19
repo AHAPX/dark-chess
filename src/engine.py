@@ -10,13 +10,18 @@ class Board(object):
     _figures = {}
     _figure_list = []
     _moves = []
+    _cut = None
 
-    def __init__(self, figures=None):
+    def __init__(self, figures=None, cut=[]):
         if figures is not None:
             self.loadFigures(figures)
         else:
             self.standFigures()
-#       self.updateFigures()
+        self._cut_list = []
+        if cut:
+            for fig in cut:
+                cls, color = FIGURES_MAP[fig]
+                self._cut_list.append((cls.kind, color))
 
     def standFigures(self):
         self._figures = {
@@ -87,6 +92,7 @@ class Board(object):
         return False
 
     def move(self, figure, x, y):
+        self._cut = None
         end_game = None
         fig = self.cell2Figure(x, y)
         if fig:
@@ -99,6 +105,8 @@ class Board(object):
                     else:
                         end_game = WhiteWon
                 self._figure_list.remove(fig)
+                self._cut = fig
+                self._cut_list.append((fig.kind, fig.color))
                 fig.terminate()
         self._moves.append({
             'figure': figure,
@@ -172,6 +180,14 @@ class Board(object):
         self._figure_list.append(queen)
         self._figure_list.remove(pawn)
         pawn.terminate()
+
+    @property
+    def lastCut(self):
+        return self._cut
+
+    @property
+    def cuts(self):
+        return self._cut_list
 
 
 class Figure(object):
@@ -456,8 +472,8 @@ class King(Figure):
 
 class Game(object):
 
-    def __init__(self, figures=None, current_player=WHITE):
-        self.board = Board(figures)
+    def __init__(self, figures=None, current_player=WHITE, cut=[]):
+        self.board = Board(figures, cut)
         self.current_player = current_player
 
     def move(self, color, pos1, pos2):

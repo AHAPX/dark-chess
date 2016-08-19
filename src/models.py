@@ -104,6 +104,7 @@ class Game(BaseModel):
     time_limit = peewee.IntegerField(null=True)
     end_reason = peewee.IntegerField(null=True)
     winner = peewee.IntegerField(null=True)
+    cut = peewee.CharField(default='')
 
     @classmethod
     def get_game(cls, token):
@@ -204,7 +205,10 @@ class Move(BaseModel):
 
 if __name__ == '__main__':
     config.DB.connect()
-    config.DB.create_tables([User])
-    config.DB.create_tables([Game])
-    config.DB.create_tables([Move])
+    if not User.table_exists():
+        config.DB.create_tables([User])
+    if not Game.table_exists():
+        config.DB.create_tables([Game])
+    if not Move.table_exists():
+        config.DB.create_tables([Move])
     print('Tables created')

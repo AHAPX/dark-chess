@@ -334,6 +334,7 @@ class TestGame(TestCaseBase):
             game.move(BLACK, (6, 7), (6, 3))
         self.assertIsInstance(cm.exception.figure, Queen)
         self.assertEqual(cm.exception.move, 'f7-f3')
+        self.assertEqual(str(game.board.lastCut), 'Kf3')
         game = Game('Ke1,Rh1,ke8')
         fig, move = game.move(WHITE, (5, 1), (7, 1))
         self.assertIsInstance(fig, King)
@@ -357,3 +358,8 @@ class TestGame(TestCaseBase):
             'rh8', 'ng8', 'bc8', 'bf8', 'qe1', 'ke8'
         ]
         self.assertEqual(str(game.board), ','.join(expect))
+        expect = [
+            (PAWN, BLACK), (PAWN, BLACK), (PAWN, WHITE), (PAWN, WHITE),
+            (KNIGHT, BLACK), (KING, WHITE)
+        ]
+        self.assertEqual(game.board.cuts, expect)

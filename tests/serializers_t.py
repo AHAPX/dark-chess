@@ -50,7 +50,7 @@ class TestSerializer(TestCaseBase):
 
     def test_board_1(self):
         with self.app.test_request_context():
-            board = Board('Pc2,Qd1,Nh6,ke8')
+            board = Board('Pc2,Qd1,Nh6,ke8', 'pPnNbBrRqQ')
             resp = serializers.BoardSerializer(board, WHITE).to_json()
             data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
@@ -64,6 +64,18 @@ class TestSerializer(TestCaseBase):
                 'c2': {'kind': 'pawn', 'color': 'white', 'position': 'c2'},
                 'd1': {'kind': 'queen', 'color': 'white', 'position': 'd1'},
                 'h6': {'kind': 'knight', 'color': 'white', 'position': 'h6'},
+                'cuts': [
+                    {'color': 'black', 'kind': 'pawn'},
+                    {'color': 'white', 'kind': 'pawn'},
+                    {'color': 'black', 'kind': 'knight'},
+                    {'color': 'white', 'kind': 'knight'},
+                    {'color': 'black', 'kind': 'bishop'},
+                    {'color': 'white', 'kind': 'bishop'},
+                    {'color': 'black', 'kind': 'rook'},
+                    {'color': 'white', 'kind': 'rook'},
+                    {'color': 'black', 'kind': 'queen'},
+                    {'color': 'white', 'kind': 'queen'},
+                ],
             }
             self.assertComprateDicts(data, expect)
 
@@ -77,12 +89,13 @@ class TestSerializer(TestCaseBase):
             expect = {
                 'rc': True, 'd8': {}, 'd7': {}, 'e7': {}, 'f7': {}, 'f8': {},
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
+                'cuts': [],
             }
             self.assertComprateDicts(data, expect)
 
     def test_board_3(self):
         with self.app.test_request_context():
-            board = Board('Pc2,Qd1,Nh6,ke8')
+            board = Board('Pc2,Qd1,Nh6,ke8', 'K')
             resp = serializers.BoardSerializer(board, UNKNOWN).to_json()
             data = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 200)
@@ -103,6 +116,7 @@ class TestSerializer(TestCaseBase):
                 'd1': {'kind': 'queen', 'color': 'white', 'position': 'd1'},
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
                 'h6': {'kind': 'knight', 'color': 'white', 'position': 'h6'},
+                'cuts': [{'color': 'white', 'kind': 'king'}],
             }
             self.assertComprateDicts(data, expect)
 
