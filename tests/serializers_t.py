@@ -1,12 +1,14 @@
 import json
+from datetime import datetime
 
 from flask import Flask
 
+import config
 from tests.base import TestCaseBase
 import serializers
 from engine import Board
 from consts import UNKNOWN, WHITE, BLACK, KING
-from models import Move
+from models import User, Move, ChatMessage
 
 
 class TestSerializer(TestCaseBase):
@@ -130,3 +132,28 @@ class TestSerializer(TestCaseBase):
             ]
             for move, expect in cases:
                 self.assertEqual(serializers.MoveSerializer(move).calc(), expect)
+
+    def test_message_1(self):
+        with self.app.test_request_context():
+            dt = datetime.now()
+            message = ChatMessage(text='hello', date_created=dt)
+            expect = {
+                'user': 'anonymous',
+                'text': 'hello',
+                'created_at': dt.isoformat(),
+            }
+            self.assertEqual(serializers.MessageSerializer(message).calc(), expect)
+
+    def test_message_2(self):
+        with self.app.test_request_context():
+            dt = datetime.now()
+            config.SITE_URL = 'http://localhost'
+            user = User(username='user1', password='passwd')
+            message = ChatMessage(text='http://localhost/someurl', date_created=dt, user=user)
+            expect = {
+                'user': 'user1',
+                'text': '/someurl',
+                'link': 'http://localhost/someurl',
+                'created_at': dt.isoformat(),
+            }
+            self.assertEqual(serializers.MessageSerializer(message).calc(), expect)

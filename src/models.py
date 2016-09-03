@@ -203,12 +203,28 @@ class Move(BaseModel):
     color = peewee.IntegerField()
 
 
+class Chat(BaseModel):
+    pk = peewee.PrimaryKeyField()
+    game = peewee.ForeignKeyField(Game, related_name='chats', on_delete='CASCADE')
+
+
+class ChatMessage(BaseModel):
+    pk = peewee.PrimaryKeyField()
+    chat = peewee.ForeignKeyField(Chat, related_name='messages', null=True, on_delete='CASCADE')
+    user = peewee.ForeignKeyField(User, related_name='messages', null=True)
+    date_created = peewee.DateTimeField(default=datetime.now)
+    text = peewee.CharField()
+
+
 if __name__ == '__main__':
     config.DB.connect()
-    if not User.table_exists():
-        config.DB.create_tables([User])
-    if not Game.table_exists():
-        config.DB.create_tables([Game])
-    if not Move.table_exists():
-        config.DB.create_tables([Move])
-    print('Tables created')
+    TABLES = [User, Game, Move, Chat, ChatMessage]
+    added = []
+    for table in TABLES:
+        if not table.table_exists():
+            config.DB.create_tables([table])
+            added.append(table.__name__)
+    if added:
+        print('Tables created: {}'.format(', '.join(added)))
+    else:
+        print('All tables already exist')

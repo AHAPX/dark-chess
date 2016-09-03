@@ -1,11 +1,12 @@
 from tests.base import TestCaseDB, MockRequest
 from validators import (
     BaseValidator, RegistrationValidator, LoginValidator, GameNewValidator,
-    GameMoveValidator, ResetValidator, RecoverValidator
+    GameMoveValidator, ResetValidator, RecoverValidator, MessageValidator
 )
 from models import User
 import errors
 from consts import TYPE_NOLIMIT, TYPE_SLOW, TYPE_FAST
+import config
 
 
 class TestValidators(TestCaseDB):
@@ -59,6 +60,7 @@ class TestValidators(TestCaseDB):
             (('user2', 'password', 'u1@fakemail'), False, 'email', None),
             (('user2', 'password', 'u2@fakemail'), True, None, None),
             (('user2', 'password', None), True, None, None),
+            (('anonymous', 'password', None), False, 'username', None),
         ]
         self.assertValidations(
             RegistrationValidator, ('username', 'password', 'email'), cases
@@ -105,3 +107,11 @@ class TestValidators(TestCaseDB):
             (('e2-e4',), True, None, {'coor1': 'e2', 'coor2': 'e4'})
         ]
         self.assertValidations(GameMoveValidator, ('move',), cases)
+
+    def test_message(self):
+        config.MAX_LENGTH_MESSAGE = 10
+        cases = [
+            (('hello',), True, None, {'text': 'hello'}),
+            (('hello, lets play to chess',), False, 'symbols', None),
+        ]
+        self.assertValidations(MessageValidator, ('text',), cases)

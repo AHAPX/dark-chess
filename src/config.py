@@ -46,6 +46,10 @@ TOKEN_SHORT_LENGTH = 10
 # game config
 GAME_QUEUE_NAME = 'players_queue'
 
+# chat config
+MAX_COUNT_MESSAGES = 50
+DEFAULT_COUNT_MESSAGES = 10
+MAX_LENGTH_MESSAGE = 100
 
 # load local config if exists
 try:

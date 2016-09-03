@@ -5,13 +5,13 @@ from flask import jsonify
 
 from consts import FIGURES, COLORS, UNKNOWN
 from helpers import pos2coors
+import config
 
 
 logger = logging.getLogger(__name__)
 
 
 class BaseSerializer(object):
-
     def __init__(self, model, color=UNKNOWN):
         self._model = model
         self._color = color
@@ -31,7 +31,6 @@ class BaseSerializer(object):
 
 
 class FigureSerializer(BaseSerializer):
-
     def calc(self):
         if not self._model:
             return {}
@@ -44,7 +43,6 @@ class FigureSerializer(BaseSerializer):
 
 
 class BoardSerializer(BaseSerializer):
-
     def calc(self):
         data = {}
         if self._color == UNKNOWN:
@@ -72,7 +70,6 @@ class BoardSerializer(BaseSerializer):
 
 
 class GameSerializer(BaseSerializer):
-
     def calc(self):
         return {
             'moves': [(
@@ -84,13 +81,25 @@ class GameSerializer(BaseSerializer):
 
 
 class MoveSerializer(BaseSerializer):
-
     def calc(self):
         if self._model.move in ('0-0', '0-0-0') or self._model.figure in ('p', 'P'):
             figure = ''
         else:
             figure = self._model.figure.upper()
         return '{}{}'.format(figure, self._model.move)
+
+
+class MessageSerializer(BaseSerializer):
+    def calc(self):
+        result = {
+            'user': self._model.user.username if self._model.user else 'anonymous',
+            'created_at': self._model.date_created.isoformat(),
+            'text': self._model.text,
+        }
+        if self._model.text.startswith(config.SITE_URL):
+            result['link'] = self._model.text
+            result['text'] = self._model.text[len(config.SITE_URL):]
+        return result
 
 
 def send_data(data):

@@ -7,6 +7,7 @@ from flask import Flask
 from handlers.auth import bp as bp_auth
 from handlers.main import bp as bp_main
 from handlers.game import bp as bp_game
+from handlers.chat import bp as bp_chat
 from errors import BaseException
 
 
@@ -16,6 +17,7 @@ app.config.from_object('config')
 app.register_blueprint(bp_main)
 app.register_blueprint(bp_auth)
 app.register_blueprint(bp_game)
+app.register_blueprint(bp_chat)
 
 logger = logging.getLogger(__name__)
 

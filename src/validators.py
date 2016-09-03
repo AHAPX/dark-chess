@@ -5,6 +5,7 @@ from helpers import get_request_arg, coors2pos, onBoard
 import errors
 from format import get_argument
 import consts
+import config
 
 
 class BaseValidator(object):
@@ -50,6 +51,8 @@ class RegistrationValidator(BaseValidator):
     def is_valid(self):
         if len(self.form['username']) < 4:
             return self.error('username must be at least 4 characters')
+        if self.form['username'] == 'anonymous':
+            return self.error('username cannot be anonymous')
         if len(self.form['password']) < 8:
             return self.error('password must be at least 8 characters')
         if User.select().where(User.username == self.form['username']).count():
@@ -145,3 +148,15 @@ class GameMoveValidator(BaseValidator):
             'coor2': coors[1],
         }
         return super(GameMoveValidator, self).is_valid()
+
+
+class MessageValidator(BaseValidator):
+    fields = {
+        'text': dict(type=str)
+    }
+
+    def is_valid(self):
+        if len(self.form['text']) > config.MAX_LENGTH_MESSAGE:
+            return self.error('message has {} symbols, but it cannot be more that {}'.format(
+                len(self.form['text']), config.MAX_LENGTH_MESSAGE))
+        return super(MessageValidator, self).is_valid()

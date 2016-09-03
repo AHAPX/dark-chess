@@ -63,8 +63,12 @@ class TestCaseWeb(TestCaseDB):
         self.client = app.test_client()
         super(TestCaseWeb, self).setUp()
 
-    def url(self, url):
-        return urljoin(self.url_prefix, url)
+    def url(self, url, **kwargs):
+        main_url = urljoin(self.url_prefix, url)
+        if kwargs:
+            args = '&'.join(['{}={}'.format(x[0], x[1]) for x in kwargs.items()])
+            return '{}?{}'.format(main_url, args)
+        return main_url
 
     def load_data(self, response):
         self.assertEqual(response.status_code, 200)
