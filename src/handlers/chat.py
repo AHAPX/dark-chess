@@ -25,12 +25,16 @@ def messages():
         return send_data(result)
 
     if request.method == 'GET':
-        limit = request.args.get('limit', config.DEFAULT_COUNT_MESSAGES)
-        offset = request.args.get('offset', 0)
-        if limit < 0:
-            limit = 0
-        if offset < 0:
-            offset = 0
+        try:
+            limit = int(request.args.get('limit', -1))
+            offset = int(request.args.get('offset', -1))
+            if limit < 0:
+                limit = config.DEFAULT_COUNT_MESSAGES
+            if offset < 0:
+                offset = 0
+        except Exception as e:
+            log.error(e)
+            return send_error('wrong arguments')
         messages = ChatMessage.select()\
                        .where(ChatMessage.chat == None)\
                        .order_by(-ChatMessage.date_created)\
