@@ -27,6 +27,10 @@ def messages():
     if request.method == 'GET':
         limit = request.args.get('limit', config.DEFAULT_COUNT_MESSAGES)
         offset = request.args.get('offset', 0)
+        if limit < 0:
+            limit = 0
+        if offset < 0:
+            offset = 0
         messages = ChatMessage.select()\
                        .where(ChatMessage.chat == None)\
                        .order_by(-ChatMessage.date_created)\
