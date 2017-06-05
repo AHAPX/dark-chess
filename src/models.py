@@ -18,7 +18,7 @@ class User(BaseModel):
     pk = peewee.PrimaryKeyField()
     username = peewee.CharField(unique=True)
     password = peewee.CharField()
-    email = peewee.CharField(null=True)
+    email = peewee.CharField(unique=True, null=True)
     date_created = peewee.DateTimeField(default=datetime.now)
     date_verified = peewee.DateTimeField(null=True)
     date_verification_token = peewee.DateTimeField(null=True)

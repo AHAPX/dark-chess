@@ -53,6 +53,7 @@ def new(data):
             try:
                 enemy_user = User.get(pk=user_id)
             except User.DoesNotExist:
+# TODO: if user not found game will be created with None as white player
                 pass
             else:
                 if enemy_user == request.user:
@@ -105,6 +106,7 @@ def invited(token):
         try:
             enemy_user = User.get(pk=user_id)
         except User.DoesNotExist:
+# TODO: if user not found game will be created with None as white player
             pass
     user_token = generate_token(True)
     game = Game.new_game(
@@ -120,8 +122,6 @@ def invited(token):
 @bp.route('/games')
 @authenticated
 def games():
-    from models import Game
-
     result = {
         'games': {
             'actives': [],
