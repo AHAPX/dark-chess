@@ -9,7 +9,7 @@ from cache import (
 )
 from helpers import generate_token, get_prefix
 from game import Game
-from models import User
+from models import User, GamePool
 from validators import GameNewValidator, GameMoveValidator
 import errors
 
@@ -31,47 +31,41 @@ def types():
     return send_data({'types': types})
 
 
-@bp.route('/new', methods=['POST'])
+@bp.route('/new', methods=['GET', 'POST'])
 @authenticated
-@validated(GameNewValidator)
-def new(data):
-    game_type = data['type']
-    game_limit = data['limit']
-    queue_prefix = get_prefix(game_type, game_limit)
-    if game_type == consts.TYPE_NOLIMIT or game_limit:
-        enemy_token = get_from_queue(queue_prefix)
-        if not enemy_token:
-            enemy_token = get_from_queue(get_prefix(game_type))
-    else:
-        enemy_token, game_limit = get_from_any_queue(game_type)
-    token = generate_token(True)
-    result = {'game': token}
-    if enemy_token:
-        enemy_user = None
-        user_id = get_cache('user_{}'.format(enemy_token))
-        if user_id:
-            try:
-                enemy_user = User.get(pk=user_id)
-            except User.DoesNotExist:
-# TODO: if user not found game will be created with None as white player
-                pass
-            else:
-                if enemy_user == request.user:
-                    add_to_queue(token, queue_prefix)
-                    return send_data(result)
-        game = Game.new_game(
-            enemy_token, token, game_type, game_limit,
-            white_user=enemy_user, black_user=request.user
-        )
-        delete_cache('wait_{}'.format(token))
-        result.update(game.get_info(consts.BLACK))
-    else:
-        add_to_queue(token, queue_prefix)
-        if request.user:
-            set_cache('user_{}'.format(token), request.user.pk, 3600)
-        set_cache('wait_{}'.format(token), (game_type, game_limit))
-    return send_data(result)
+def new():
 
+    @validated(GameNewValidator)
+    def _post(data):
+        game_type = data['type']
+        game_limit = data['limit']
+        token = generate_token(True)
+        pool = GamePool.create(
+            player1 = token,
+            user1 = request.user,
+            type_game = game_type,
+            time_limit = game_limit,
+        )
+        set_cache('wait_{}'.format(token), (game_type, game_limit))
+        return send_data({'game': token})
+
+    if request.method == 'GET':
+        result = []
+        for pool in GamePool.select().where(
+            GamePool.is_started == False,
+            GamePool.is_lost == False,
+            GamePool.player1 is not None
+        ):
+            result.append({
+                'id': pool.pk,
+                'date_created': pool.date_created.isoformat(),
+                'user': pool.user1.username if pool.user1 else None,
+                'type': consts.TYPES[pool.type_game]['name'],
+                'limit': consts.PERIODS.get(pool.time_limit),
+            })
+        return send_data({'games': result})
+    elif request.method == 'POST':
+        return _post()
 
 @bp.route('/invite', methods=['POST'])
 @authenticated
@@ -122,6 +116,8 @@ def invited(token):
 @bp.route('/games')
 @authenticated
 def games():
+    from models import Game
+
     result = {
         'games': {
             'actives': [],

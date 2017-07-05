@@ -216,9 +216,22 @@ class ChatMessage(BaseModel):
     text = peewee.CharField()
 
 
+class GamePool(BaseModel):
+    pk = peewee.PrimaryKeyField()
+    player1 = peewee.CharField(null=True)
+    player2 = peewee.CharField(null=True)
+    user1 = peewee.ForeignKeyField(User, related_name='gamepools1', null=True)
+    user2 = peewee.ForeignKeyField(User, related_name='gamepools2', null=True)
+    date_created = peewee.DateTimeField(default=datetime.now)
+    type_game = peewee.IntegerField(default=consts.TYPE_NOLIMIT)
+    time_limit = peewee.IntegerField(null=True)
+    is_started = peewee.BooleanField(default=False)
+    is_lost = peewee.BooleanField(default=False)
+
+
 if __name__ == '__main__':
     config.DB.connect()
-    TABLES = [User, Game, Move, Chat, ChatMessage]
+    TABLES = [User, Game, Move, Chat, ChatMessage, GamePool]
     added = []
     for table in TABLES:
         if not table.table_exists():

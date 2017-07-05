@@ -80,6 +80,7 @@ TYPES = {
 }
 
 TYPES_NAMES = {value['name']: key for key, value in TYPES.items()}
+PERIODS = {k: v for d in [{v[1]: k for k, v in x['periods'].items()} for x in TYPES.values()] for k, v in d.items()}
 
 # end reasons
 END_CHECKMATE = 1

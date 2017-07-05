@@ -79,7 +79,7 @@ class TestSerializer(TestCaseBase):
                     {'color': 'white', 'kind': 'queen'},
                 ],
             }
-            self.assertComprateDicts(data, expect)
+            self.assertCompareDicts(data, expect)
 
     def test_board_2(self):
         with self.app.test_request_context():
@@ -93,7 +93,7 @@ class TestSerializer(TestCaseBase):
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
                 'cuts': [],
             }
-            self.assertComprateDicts(data, expect)
+            self.assertCompareDicts(data, expect)
 
     def test_board_3(self):
         with self.app.test_request_context():
@@ -120,7 +120,7 @@ class TestSerializer(TestCaseBase):
                 'h6': {'kind': 'knight', 'color': 'white', 'position': 'h6'},
                 'cuts': [{'color': 'white', 'kind': 'king'}],
             }
-            self.assertComprateDicts(data, expect)
+            self.assertCompareDicts(data, expect)
 
     def test_move(self):
         with self.app.test_request_context():

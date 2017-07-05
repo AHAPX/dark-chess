@@ -17,15 +17,18 @@ from app import app
 
 test_db = SqliteDatabase(':memory:')
 
+SKIP = '---IGNORE---' 
+
 
 class TestCaseBase(unittest.TestCase):
 
-    def assertComprateDicts(self, data, expect):
+    def assertCompareDicts(self, data, expect):
         for k1, v1 in expect.items():
             if isinstance(v1, dict):
                 for k2, v2 in v1.items():
-                    self.assertEqual(data[k1][k2], v2)
-            else:
+                    if v2 != SKIP:
+                        self.assertEqual(data[k1][k2], v2)
+            elif v1 != SKIP:
                 self.assertEqual(data[k1], v1)
         for key in data.keys():
             self.assertIn(key, expect)
