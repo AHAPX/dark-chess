@@ -97,6 +97,9 @@ class TestCaseWeb(TestCaseDB):
         self.client.set_cookie('localhost', 'auth', data['auth'])
         return data['auth']
 
+    def logout(self):
+        self.client.get('/v1/auth/logout')
+
 
 class MockRequest(object):
 

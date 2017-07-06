@@ -1,5 +1,6 @@
 from flask import request, Blueprint
 
+import config
 import consts
 from serializers import send_data, send_error
 from decorators import with_game, use_cache, authenticated, validated
@@ -51,21 +52,54 @@ def new():
 
     if request.method == 'GET':
         result = []
+        count = 0
         for pool in GamePool.select().where(
             GamePool.is_started == False,
             GamePool.is_lost == False,
-            GamePool.player1 is not None
-        ):
+            GamePool.player1 is not None,
+        ).order_by(GamePool.date_created.desc()):
+            if pool.user1 and pool.user1 == request.user:
+                continue
             result.append({
                 'id': pool.pk,
                 'date_created': pool.date_created.isoformat(),
                 'user': pool.user1.username if pool.user1 else None,
                 'type': consts.TYPES[pool.type_game]['name'],
-                'limit': consts.PERIODS.get(pool.time_limit),
+                'limit': pool.time_limit,
             })
+            count += 1
+            if count > 9:
+                break
         return send_data({'games': result})
     elif request.method == 'POST':
         return _post()
+
+
+@bp.route('/new/<game_id>', methods=['POST'])
+@authenticated
+def accept(game_id):
+    try:
+        pool = GamePool.get(GamePool.pk == game_id)
+    except GamePool.DoesNotExist:
+        return send_error('Game not found')
+    except Exception as e:
+        return send_error('Wrong format')
+    if pool.user1 and pool.user1 == request.user:
+        return send_error('You cannot start game with yourself')
+    with config.DB.atomic():
+        pool.player2 = generate_token(True)
+        pool.user2 = request.user
+        pool.is_started = True
+        pool.save()
+        game = Game.new_game(
+            pool.player1, pool.player2, pool.type_game, pool.time_limit,
+            white_user=pool.user1, black_user=pool.user2
+        )
+        delete_cache('wait_{}'.format(pool.player1))
+        result = {'game': pool.player2}
+        result.update(game.get_info(consts.BLACK))
+    return send_data(result)
+
 
 @bp.route('/invite', methods=['POST'])
 @authenticated
