@@ -41,7 +41,7 @@ class TestHandlerAuth(TestCaseWeb):
 
     def test_register_3(self):
         # successful registration with email
-        with patch('handlers.auth.send_mail_template') as mock,\
+        with patch('handlers.v1.auth.send_mail_template') as mock,\
                 patch('models.User.get_verification') as mock1:
             mock1.return_value = 'token'
             resp = self.client.post(self.url('register'), data={
@@ -111,7 +111,7 @@ class TestHandlerAuth(TestCaseWeb):
     def test_get_verification_2(self):
         # login and get verification token
         self.login(*self.add_user('user1', 'password', 'user1@fakemail'))
-        with patch('handlers.auth.send_mail_template') as mock,\
+        with patch('handlers.v1.auth.send_mail_template') as mock,\
                 patch('models.User.get_verification') as mock1:
             mock1.return_value = 'token'
             resp = self.client.get(self.url('verification'))
@@ -175,7 +175,7 @@ class TestHandlerAuth(TestCaseWeb):
 
     def test_reset_and_recover(self):
         self.add_user('user1', 'password', 'user1@fakemail')
-        with patch('handlers.auth.send_mail_template') as mock,\
+        with patch('handlers.v1.auth.send_mail_template') as mock,\
                 patch('models.generate_token') as mock1:
             mock1.return_value = 'token'
             resp = self.client.post(self.url('reset'), data={'email': 'user1@fakemail'})

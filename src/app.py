@@ -4,10 +4,10 @@ import logging
 
 from flask import Flask
 
-from handlers.auth import bp as bp_auth
-from handlers.main import bp as bp_main
-from handlers.game import bp as bp_game
-from handlers.chat import bp as bp_chat
+from handlers.v1.auth import bp as bp_auth
+from handlers.v1.main import bp as bp_main
+from handlers.v1.game import bp as bp_game
+from handlers.v1.chat import bp as bp_chat
 from errors import BaseException
 
 

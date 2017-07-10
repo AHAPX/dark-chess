@@ -13,7 +13,7 @@ class TestHandlerChat(TestCaseWeb):
         resp = self.client.get(self.url('messages'))
         self.assertEqual(self.load_data(resp), {'rc': True, 'messages': []})
         # add message 1
-        with patch('handlers.chat.send_ws') as mock:
+        with patch('handlers.v1.chat.send_ws') as mock:
             resp = self.client.post(self.url('messages'), data={'text': 'message1'})
             data = self.load_data(resp)
             mock.assert_called_once_with(data, consts.WS_CHAT_MESSAGE)
@@ -21,7 +21,7 @@ class TestHandlerChat(TestCaseWeb):
         self.assertEqual(data['message']['text'], 'message1')
         dt1 = data['message']['created_at']
         # add message 2
-        with patch('handlers.chat.send_ws') as mock:
+        with patch('handlers.v1.chat.send_ws') as mock:
             resp = self.client.post(self.url('messages'), data={'text': 'message2'})
             data = self.load_data(resp)
             mock.assert_called_once_with(data, consts.WS_CHAT_MESSAGE)

@@ -12,7 +12,7 @@ class TestHandlerMain(TestCaseWeb):
         self.assertTrue(data['rc'])
         self.assertIn('message', data)
 
-    @patch('handlers.main.send_message')
+    @patch('handlers.v1.main.send_message')
     def test_server_error_1(self, send_message):
         app.config['DEBUG'] = False
         send_message.side_effect = ValueError('value_err')
@@ -20,7 +20,7 @@ class TestHandlerMain(TestCaseWeb):
             resp = self.client.get(self.url(''))
             self.assertEqual(resp.status_code, 500)
 
-    @patch('handlers.main.send_message')
+    @patch('handlers.v1.main.send_message')
     def test_server_error_2(self, send_message):
         app.config['DEBUG'] = True
         send_message.side_effect = ValueError('value_err')
