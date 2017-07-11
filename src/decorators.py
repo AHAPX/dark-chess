@@ -36,7 +36,7 @@ def authenticated(f):
 def login_required(f):
     @wraps(f)
     def decorator(*args, **kwargs):
-        if hasattr(request, 'user') and request.user:
+        if getattr(request, 'user', None):
             return f(*args, **kwargs)
         return send_error('not authorized')
     return decorator
@@ -108,5 +108,18 @@ def validated(validator):
             if not val.is_valid():
                 return send_error(val.get_error())
             return f(data=val.cleaned_data, *args, **kwargs)
+        return decorator
+    return wrapper
+
+
+def validate(validator):
+    def wrapper(method):
+        @wraps(method)
+        def decorator(self, *args, **kwargs):
+            val = validator(request)
+            if not val.is_valid():
+                raise errors.ValidationError(val.get_error())
+            self.data = val.cleaned_data
+            return method(self, *args, **kwargs)
         return decorator
     return wrapper

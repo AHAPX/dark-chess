@@ -1,5 +1,3 @@
-import logging
-
 import engine
 import models
 import consts
@@ -12,9 +10,6 @@ from cache import set_cache, get_cache, delete_cache, get_cache_func_name
 from connections import send_ws
 from decorators import formatted
 from format import format
-
-
-logger = logging.getLogger(__name__)
 
 
 class Game(object):

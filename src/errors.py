@@ -10,7 +10,7 @@ class BaseArgException(BaseException):
         self.message = self.message.format(*args, **kwargs)
         super(BaseArgException, self).__init__(*args, **kwargs)
 
-
+# engine exceptions
 class OutOfBoardError(BaseException):
     message = 'coordinates are out of board'
 
@@ -54,7 +54,7 @@ class Draw(EndGame):
     message = 'draw'
     reason = consts.END_DRAW
 
-
+# handlers exceptions
 class GameNotFoundError(BaseException):
     message = 'game not found'
 
@@ -90,3 +90,19 @@ class ValidationRequiredError(ValidationError):
 
 class ResetRequestError(BaseArgException):
     message = 'you must wait {} seconds to get new reset code'
+
+# API exceptions
+class APIException(BaseArgException):
+    message = '{}'
+
+
+class APIUnauthorized(APIException):
+    message = 'not authorized'
+
+
+class APIForbidden(APIException):
+    message = 'forbidden'
+
+
+class APINotFound(APIException):
+    message = '{} not found'

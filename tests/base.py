@@ -1,18 +1,19 @@
+import inspect
+import json
+import sys
 import unittest
 from unittest.mock import patch
 from urllib.parse import urljoin
-import inspect
-import sys
-import json
 
-from playhouse.test_utils import test_database
-from peewee import SqliteDatabase, Model
 from fakeredis import FakeStrictRedis
+from flask import Flask
+from peewee import SqliteDatabase, Model
+from playhouse.test_utils import test_database
 
+from app import app
 import cache
 import connections
 from models import User, Game, Move
-from app import app
 
 
 test_db = SqliteDatabase(':memory:')
@@ -32,6 +33,11 @@ class TestCaseBase(unittest.TestCase):
                 self.assertEqual(data[k1], v1)
         for key in data.keys():
             self.assertIn(key, expect)
+
+    def run(self, *args, **kwargs):
+        app = Flask(__name__)
+        with app.test_request_context():
+            super(TestCaseBase, self).run(*args, **kwargs)
 
 
 class TestCaseCache(TestCaseBase):
@@ -65,6 +71,9 @@ class TestCaseWeb(TestCaseDB):
         app.config['DEBUG'] = True
         self.client = app.test_client()
         super(TestCaseWeb, self).setUp()
+
+    def assertApiError(self, response, code=400):
+        self.assertEqual(response.status_code, code)
 
     def url(self, url, **kwargs):
         main_url = urljoin(self.url_prefix, url)
