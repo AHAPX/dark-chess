@@ -54,6 +54,7 @@ class Draw(EndGame):
     message = 'draw'
     reason = consts.END_DRAW
 
+
 # handlers exceptions
 class GameNotFoundError(BaseException):
     message = 'game not found'
@@ -90,6 +91,7 @@ class ValidationRequiredError(ValidationError):
 
 class ResetRequestError(BaseArgException):
     message = 'you must wait {} seconds to get new reset code'
+
 
 # API exceptions
 class APIException(BaseArgException):

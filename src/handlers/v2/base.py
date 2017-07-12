@@ -14,6 +14,7 @@ logger = getLogger(__name__)
 
 class RestBase():
     auth_required = False
+    pre_methods = []
 
     def __init__(self):
         self.map = {
@@ -69,12 +70,19 @@ class RestBase():
             self.check_authorization()
             if self.auth_required and not request.user:
                 raise APIUnauthorized
-            with config.DB.atomic() as transaction:
-                try:
-                    result = func(*args, **kwargs)
-                except Exception as e:
-                    transaction.rollback()
-                    raise e
+            for name in self.pre_methods:
+                method = getattr(self, name, None)
+                if method and callable(method):
+                    result = method(*args, **kwargs)
+                    if result:
+                        break
+            if not result:
+                with config.DB.atomic() as transaction:
+                    try:
+                        result = func(*args, **kwargs)
+                    except Exception as e:
+                        transaction.rollback()
+                        raise e
         except APIUnauthorized as e:
             abort(make_response(e.message, 401))
         except APIForbidden as e:

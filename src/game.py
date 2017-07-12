@@ -182,7 +182,7 @@ class Game(object):
 
     def resign(self, color=None):
         if self.model.ended:
-            return send_error('game is over')
+            raise errors.EndGame
         winner = invert_color(self.get_color(color))
         self.model.game_over(consts.END_RESIGN, winner=winner)
         self.send_ws(self.get_info(winner), consts.WS_WIN, winner)
