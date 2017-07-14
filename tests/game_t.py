@@ -132,59 +132,46 @@ class TestGame(TestCaseDB):
     def test_draw_accept(self, get_info):
         get_info.return_value = 'info'
         # add draw request
-        with patch('game.send_success') as mock, patch('game.Game.send_ws') as mock1:
+        with patch('game.Game.send_ws') as mock:
             self.game.draw_accept()
-            mock.assert_called_once_with()
-            mock1.assert_called_once_with('opponent offered draw', WS_DRAW_REQUEST, BLACK)
+            mock.assert_called_once_with('opponent offered draw', WS_DRAW_REQUEST, BLACK)
         # add draw accept, game should be over
-        with patch('game.send_data') as mock,\
-                patch('game.send_ws') as mock1:
+        with patch('game.send_ws') as mock:
             self.game.draw_accept(BLACK)
-            mock.assert_called_once_with('info')
         # game is over
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.EndGame):
             self.game.model.date_end = datetime.now()
             self.game.draw_accept()
-            mock.assert_called_once_with('game is over')
 
     def test_draw_refuse_1(self):
         # add draw request and check cache
-        with patch('game.send_success') as mock,\
-                patch('game.Game.send_ws') as mock1:
+        with patch('game.Game.send_ws') as mock:
             self.game.draw_accept()
-            mock.assert_called_once_with()
-            mock1.assert_called_once_with('opponent offered draw', WS_DRAW_REQUEST, BLACK)
+            mock.assert_called_once_with('opponent offered draw', WS_DRAW_REQUEST, BLACK)
         self.assertFalse(get_cache(self.game._get_draw_name(BLACK)))
         self.assertTrue(get_cache(self.game._get_draw_name(WHITE)))
         # delete draw by white and check cache again
-        with patch('game.send_success') as mock:
-            self.game.draw_refuse()
-            mock.assert_called_once_with()
+        self.game.draw_refuse()
         self.assertFalse(get_cache(self.game._get_draw_name(BLACK)))
         self.assertFalse(get_cache(self.game._get_draw_name(WHITE)))
 
     def test_draw_refuse_2(self):
         # add draw request and check cache
-        with patch('game.send_success') as mock,\
-                patch('game.Game.send_ws') as mock1:
+        with patch('game.Game.send_ws') as mock:
             self.game.draw_accept(WHITE)
-            mock.assert_called_once_with()
-            mock1.assert_called_once_with('opponent offered draw', WS_DRAW_REQUEST, BLACK)
+            mock.assert_called_once_with('opponent offered draw', WS_DRAW_REQUEST, BLACK)
         self.assertFalse(get_cache(self.game._get_draw_name(BLACK)))
         self.assertTrue(get_cache(self.game._get_draw_name(WHITE)))
         # refuse draw by black and check cache again
-        with patch('game.send_success') as mock:
-            self.game.draw_refuse(BLACK)
-            mock.assert_called_once_with()
+        self.game.draw_refuse(BLACK)
         self.assertFalse(get_cache(self.game._get_draw_name(BLACK)))
         self.assertFalse(get_cache(self.game._get_draw_name(WHITE)))
 
     def test_draw_refuse_3(self):
         # try to refuse ended game
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.EndGame):
             self.game.model.date_end = datetime.now()
             self.game.draw_refuse()
-            mock.assert_called_once_with('game is over')
 
     @patch('game.Game.get_info')
     @patch('game.Game.send_ws')
@@ -193,7 +180,7 @@ class TestGame(TestCaseDB):
         # check draw without draw request
         self.assertFalse(self.game.check_draw())
         # added draw requests without checking draw inside
-        with patch('game.send_success'), patch('game.Game.check_draw') as mock:
+        with patch('game.Game.check_draw') as mock:
             mock.return_value = False
             self.game.draw_accept(WHITE)
             self.game.draw_accept(BLACK)
@@ -212,16 +199,13 @@ class TestGame(TestCaseDB):
     def test_resign(self, send_ws, get_info):
         get_info.return_value = 'info'
         # resign game successfully
-        with patch('game.send_data') as mock:
-            self.game.resign()
-            self.assertEqual(self.game.model.end_reason, END_RESIGN)
-            mock.assert_called_once_with('info')
-            send_ws.assert_called_once_with('info', WS_WIN, BLACK)
+        self.game.resign()
+        self.assertEqual(self.game.model.end_reason, END_RESIGN)
+        send_ws.assert_called_once_with('info', WS_WIN, BLACK)
         send_ws.reset_mock()
         # try to resign when game is over
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.EndGame):
             self.game.resign()
-            mock.assert_called_once_with('game is over')
             self.assertFalse(send_ws.called)
 
     @patch('game.Game.get_info')
@@ -230,58 +214,48 @@ class TestGame(TestCaseDB):
     def test_move(self, send_ws, onMove, get_info):
         # make move successful
         get_info.return_value = {'_name': 'info'}
-        with patch('game.send_data') as mock,\
-                patch('game.Game.get_board') as mock1:
-            mock1.return_value = 'board'
-            self.game.move('e2', 'e4')
-            self.assertEqual(mock.call_count, 1)
-            expect = {
-                '_name': 'info',
-                'number': 1,
-            }
-            onMove.assert_called_once_with()
-            send_ws.assert_called_once_with(expect, WS_MOVE, BLACK)
+        self.game.move('e2', 'e4')
+        expect = {
+            '_name': 'info',
+            'number': 1,
+        }
+        onMove.assert_called_once_with()
+        send_ws.assert_called_once_with(expect, WS_MOVE, BLACK)
         send_ws.reset_mock()
         onMove.reset_mock()
         # wrong turn
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.WrongTurnError):
             self.game.move('e7', 'e5')
-            mock.assert_called_once_with(errors.WrongTurnError.message)
             self.assertFalse(onMove.called)
             self.assertFalse(send_ws.called)
         # wrong color of figure
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.WrongFigureError):
             self.game.move('e4', 'e5', BLACK)
-            mock.assert_called_once_with(errors.WrongFigureError.message)
         # not found figure
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.NotFoundError):
             self.game.move('e6', 'e5', BLACK)
-            mock.assert_called_once_with(errors.NotFoundError.message)
         # wrong move
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.WrongMoveError):
             self.game.move('e7', 'd7', BLACK)
-            mock.assert_called_once_with(errors.WrongMoveError.message)
         # wrong cell
-        with patch('game.send_error') as mock:
+        with self.assertRaises(errors.OutOfBoardError):
             self.game.move('e9', 'e8', BLACK)
-            mock.assert_called_once_with(errors.OutOfBoardError.message)
         # db error
-        with patch('game.send_error') as mock, patch('models.Game.add_move') as mock1:
-            mock1.side_effect = Exception('db error')
-            with self.assertLogs('game', level='ERROR'):
-                self.game.move('e7', 'e5', BLACK)
-            mock.assert_called_once_with('system error')
+        with self.assertRaises(errors.BaseException):
+            with patch('models.Game.add_move') as mock:
+                mock.side_effect = Exception('db error')
+                with self.assertLogs('game', level='ERROR'):
+                    self.game.move('e7', 'e5', BLACK)
         self.assertFalse(onMove.called)
         self.assertFalse(send_ws.called)
         # move with ending game
-        with patch('game.send_data') as mock, patch('engine.Game.move') as mock1:
+        with patch('engine.Game.move') as mock:
             error = errors.BlackWon()
             error.reason = END_CHECKMATE
             error.figure = self.game.game.board.getFigure(BLACK, KING)
             error.move = 'e7-e5'
-            mock1.side_effect = error
+            mock.side_effect = error
             self.game.move('e7', 'e5', BLACK)
-            mock.assert_called_once_with({'_name': 'info', 'number': 2})
             send_ws.assert_has_calls([
                 call({'number': 2, '_name': 'info'}, WS_LOSE, WHITE),
             ])
@@ -302,33 +276,25 @@ class TestGame(TestCaseDB):
     @patch('game.Game.get_info')
     def test_moves(self, get_info):
         get_info.return_value = {'_name': 'info'}
-        with patch('game.send_data') as mock,\
-                patch('game.send_ws') as mock1:
+        with patch('game.send_ws') as mock:
             self.game.move('e2', 'e4', WHITE)
             self.game.move('e7', 'e5', BLACK)
             self.game.move('b2', 'b3', WHITE)
             self.game.move('d7', 'd6', BLACK)
             mock.reset_mock()
-            mock1.reset_mock()
             # only white moves
             expect = {'moves': ['e2-e4', 'b2-b3']}
             Game.load_game('1234').moves()
-            mock.assert_called_once_with(expect)
-            mock.reset_mock()
             # only black moves
             expect = {'moves': ['e7-e5', 'd7-d6']}
             Game.load_game('qwer').moves()
-            mock.assert_called_once_with(expect)
-            mock.reset_mock()
             # all moves
             self.game.model.game_over(END_DRAW)
             expect = {'moves': ['e2-e4', 'e7-e5', 'b2-b3', 'd7-d6']}
             Game.load_game('1234').moves()
             Game.load_game('qwer').moves()
-            mock.assert_has_calls([call(expect), call(expect)])
 
-    @patch('game.send_data')
-    def test_check_castles_1(self, send_data):
+    def test_check_castles_1(self):
         # white: move king and check castles
         self.game.game.board = Board('Ke1,Ra1,Rh1,ke8')
         king = self.game.game.board.getFigure(WHITE, KING)
@@ -340,8 +306,7 @@ class TestGame(TestCaseDB):
         self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))
 
-    @patch('game.send_data')
-    def test_check_castles_2(self, send_data):
+    def test_check_castles_2(self):
         # white: move rooks separately and check castles
         self.game.game.board = Board('Ke1,Ra1,Rh1,ke8')
         king = self.game.game.board.getFigure(WHITE, KING)
@@ -362,8 +327,7 @@ class TestGame(TestCaseDB):
         self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))
 
-    @patch('game.send_data')
-    def test_check_castles_3(self, send_data):
+    def test_check_castles_3(self):
         # black: move king and check castles
         self.game.game.board = Board('Ke1,ra8,rh8,ke8')
         self.game.move('e1', 'e2', WHITE)
@@ -376,8 +340,7 @@ class TestGame(TestCaseDB):
         self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))
 
-    @patch('game.send_data')
-    def test_check_castles_4(self, send_data):
+    def test_check_castles_4(self):
         # black: move rooks separately and check castles
         self.game.game.board = Board('Ke1,ra8,rh8,ke8')
         self.game.move('e1', 'e2', WHITE)
@@ -399,8 +362,7 @@ class TestGame(TestCaseDB):
         self.assertFalse(king.can_castle(True))
         self.assertFalse(king.can_castle(False))
 
-    @patch('game.send_data')
-    def test_cuts(self, send_data):
+    def test_cuts(self):
         # do moves and check cuts
         self.game.move('e2', 'e4', WHITE)
         self.assertIsNone(self.game.game.board.lastCut)

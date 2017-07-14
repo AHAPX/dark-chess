@@ -22,8 +22,8 @@ class BaseSerializer(object):
     def to_json(self):
         try:
             data = self.calc()
-#           if 'rc' not in data:
-#               data['rc'] = True
+            if 'rc' not in data:
+                data['rc'] = True
             return jsonify(data)
         except Exception as exc:
             logger.error(exc)

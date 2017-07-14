@@ -19,32 +19,13 @@ class TestSerializer(TestCaseBase):
     def test_base(self):
         with self.app.test_request_context():
             # success
-            resp = serializers.BaseSerializer({'data': 'test'}).to_json()
-            data = json.loads(resp.data.decode())
-            self.assertEqual(resp.status_code, 200)
-            self.assertTrue(data['rc'])
-            self.assertEqual(data['data'], 'test')
-            # error
-            with self.assertLogs('serializers', level='ERROR'):
-                resp = serializers.BaseSerializer('data').to_json()
-            data = json.loads(resp.data.decode())
-            self.assertEqual(resp.status_code, 200)
-            self.assertFalse(data['rc'])
-            self.assertEqual(data['error'], 'system error')
-            # succes with rc = False
-            resp = serializers.BaseSerializer({'rc': False, 'data': 'test'}).to_json()
-            data = json.loads(resp.data.decode())
-            self.assertEqual(resp.status_code, 200)
-            self.assertFalse(data['rc'])
+            data = serializers.BaseSerializer({'data': 'test'}).calc()
             self.assertEqual(data['data'], 'test')
 
     def test_figure(self):
         with self.app.test_request_context():
             figure = Board('Ke1').getFigure(WHITE, KING)
-            resp = serializers.FigureSerializer(figure).to_json()
-            data = json.loads(resp.data.decode())
-            self.assertEqual(resp.status_code, 200)
-            self.assertTrue(data['rc'])
+            data = serializers.FigureSerializer(figure).calc()
             self.assertEqual(data['kind'], 'king')
             self.assertEqual(data['color'], 'white')
             self.assertEqual(data['position'], 'e1')
@@ -53,12 +34,9 @@ class TestSerializer(TestCaseBase):
     def test_board_1(self):
         with self.app.test_request_context():
             board = Board('Pc2,Qd1,Nh6,ke8', 'pPnNbBrRqQ')
-            resp = serializers.BoardSerializer(board, WHITE).to_json()
-            data = json.loads(resp.data.decode())
-            self.assertEqual(resp.status_code, 200)
-            self.assertTrue(data['rc'])
+            data = serializers.BoardSerializer(board, WHITE).calc()
             expect = {
-                'rc': True, 'b3': {}, 'c3': {}, 'c4': {}, 'd2': {}, 'd3': {},
+                'b3': {}, 'c3': {}, 'c4': {}, 'd2': {}, 'd3': {},
                 'd4': {}, 'd5': {}, 'd6': {}, 'd7': {}, 'd8': {}, 'e2': {},
                 'f3': {}, 'g4': {}, 'h5': {}, 'g8': {}, 'g4': {}, 'f5': {},
                 'f7': {}, 'a1': {}, 'b1': {}, 'c1': {}, 'e1': {}, 'f1': {},
@@ -84,12 +62,9 @@ class TestSerializer(TestCaseBase):
     def test_board_2(self):
         with self.app.test_request_context():
             board = Board('Pc2,Qd1,Nh6,ke8')
-            resp = serializers.BoardSerializer(board, BLACK).to_json()
-            data = json.loads(resp.data.decode())
-            self.assertEqual(resp.status_code, 200)
-            self.assertTrue(data['rc'])
+            data = serializers.BoardSerializer(board, BLACK).calc()
             expect = {
-                'rc': True, 'd8': {}, 'd7': {}, 'e7': {}, 'f7': {}, 'f8': {},
+                'd8': {}, 'd7': {}, 'e7': {}, 'f7': {}, 'f8': {},
                 'e8': {'kind': 'king', 'color': 'black', 'position': 'e8'},
                 'cuts': [],
             }
@@ -98,12 +73,9 @@ class TestSerializer(TestCaseBase):
     def test_board_3(self):
         with self.app.test_request_context():
             board = Board('Pc2,Qd1,Nh6,ke8', 'K')
-            resp = serializers.BoardSerializer(board, UNKNOWN).to_json()
-            data = json.loads(resp.data.decode())
-            self.assertEqual(resp.status_code, 200)
-            self.assertTrue(data['rc'])
+            data = serializers.BoardSerializer(board, UNKNOWN).calc()
             expect = {
-                'rc': True, 'a1': {}, 'a2': {}, 'a3': {}, 'a4': {}, 'a5': {},
+                'a1': {}, 'a2': {}, 'a3': {}, 'a4': {}, 'a5': {},
                 'a6': {}, 'a7': {}, 'a8': {}, 'b1': {}, 'b2': {}, 'b3': {},
                 'b4': {}, 'b5': {}, 'b6': {}, 'b7': {}, 'b8': {}, 'c1': {},
                 'c3': {}, 'c4': {}, 'c5': {}, 'c6': {}, 'c7': {}, 'c8': {},

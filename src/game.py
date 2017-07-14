@@ -2,14 +2,16 @@ import engine
 import models
 import consts
 import errors
-from serializers import (
-    BoardSerializer, MoveSerializer, send_error, send_success, send_data,
-)
+from serializers import BoardSerializer, MoveSerializer
 from helpers import coors2pos, invert_color
 from cache import set_cache, get_cache, delete_cache, get_cache_func_name
 from connections import send_ws
 from decorators import formatted
 from format import format
+from loggers import getLogger
+
+
+logger = getLogger(__name__)
 
 
 class Game(object):
@@ -108,22 +110,20 @@ class Game(object):
 
     def move(self, coor1, coor2, color=None):
         if self.model.ended:
-            return send_error('game is over')
+            raise errors.EndGame
         game_over = None
         try:
             color = self.get_color(color)
             figure, move = self.game.move(color, coors2pos(coor1), coors2pos(coor2))
-        except errors.EndGame as exc:
-            game_over, figure, move = exc.reason, exc.figure, exc.move
-        except errors.BaseException as exc:
-            return send_error(exc.message)
+        except errors.EndGame as e:
+            game_over, figure, move = e.reason, e.figure, e.move
         try:
             num = self.model.add_move(
                 figure.symbol, move, str(self.game.board), game_over
             ).number
-        except Exception as exc:
-            logger.error(exc)
-            return send_error('system error')
+        except Exception as e:
+            logger.error(e)
+            raise errors.BaseException
         if self.game.board._cut:
             self.model.cut += self.game.board._cut.symbol
             self.model.save()
@@ -132,9 +132,9 @@ class Game(object):
         msg.update({'number': num})
         if game_over:
             self.send_ws(msg, consts.WS_LOSE, invert_color(color))
-            return send_data(self.get_info())
+            return self.get_info()
         self.send_ws(msg, consts.WS_MOVE, invert_color(color))
-        return send_data(self.get_info())
+        return self.get_info()
 
     def send_ws(self, msg, signal, color=consts.UNKNOWN):
         tags = []
@@ -149,21 +149,19 @@ class Game(object):
 
     def draw_accept(self, color=None):
         if self.model.ended:
-            return send_error('game is over')
+            raise errors.EndGame
         color = self.get_color(color)
         set_cache(self._get_draw_name(color), True)
         if self.check_draw():
-            return send_data(self.get_info())
+            return self.get_info()
         self.send_ws('opponent offered draw', consts.WS_DRAW_REQUEST, invert_color(color))
-        return send_success()
 
     def draw_refuse(self, color=None):
         if self.model.ended:
-            return send_error('game is over')
+            raise errors.EndGame
         color = self.get_color
         delete_cache(self._get_draw_name(color))
         delete_cache(self._get_draw_name(invert_color(color)))
-        return send_success()
 
     def check_draw(self):
         if not self.model.ended:
@@ -187,16 +185,16 @@ class Game(object):
         self.model.game_over(consts.END_RESIGN, winner=winner)
         self.send_ws(self.get_info(winner), consts.WS_WIN, winner)
         self.onMove()
-        return send_data(self.get_info())
+        return self.get_info()
 
     def moves(self, color=None):
         if not self.model.ended:
             color = self.get_color(color)
         else:
             color = None
-        return send_data({
+        return {
             'moves': [MoveSerializer(m).calc() for m in self.model.get_moves(color)]
-        })
+        }
 
     def onMove(self):
         for name in ('game_info_handler', 'game_moves_handler'):
