@@ -38,7 +38,7 @@ class RestVerification(RestBase):
         try:
             token = request.user.get_verification()
         except Exception as e:
-            raise APIException(e.message)
+            raise APIException(str(e))
         data = {
             'username': request.user.username,
             'url': urljoin(config.SITE_URL, config.VERIFY_URL),

@@ -258,7 +258,7 @@ class Figure(object):
         self.updateMoves()
 
     def reset(self):
-        _moves = None
+        self._moves = None
 
     @property
     def moved(self):

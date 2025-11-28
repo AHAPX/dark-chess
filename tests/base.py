@@ -8,7 +8,31 @@ from urllib.parse import urljoin
 from fakeredis import FakeStrictRedis
 from flask import Flask
 from peewee import SqliteDatabase, Model
-from playhouse.test_utils import test_database
+try:
+    from playhouse.test_utils import test_database
+except (ImportError, AttributeError):
+    from contextlib import contextmanager
+
+    @contextmanager
+    def test_database(database, models, create_tables=True, fail_silently=False):
+        """
+        Lightweight replacement for the Peewee helper that was removed in newer
+        releases. It temporarily binds the provided models to the supplied
+        database, creates their tables, and tears everything down afterwards.
+        """
+        originals = {model: model._meta.database for model in models}
+        database.bind(models, bind_refs=False, bind_backrefs=False)
+        if create_tables:
+            database.connect(reuse_if_open=True)
+            database.create_tables(models)
+        try:
+            yield
+        finally:
+            if create_tables:
+                database.drop_tables(models)
+                database.close()
+            for model, original in originals.items():
+                model._meta.database = original
 
 from app import app
 import cache

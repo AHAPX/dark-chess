@@ -125,6 +125,6 @@ class BlueprintBase(Blueprint):
             self.rest(*url)
 
     def addChild(self, name, import_name, url_prefix):
-        name = '{}.{}'.format(self.name, name)
+        name = '{}_{}'.format(self.name, name)
         url_prefix = '{}{}'.format(self.url_prefix, url_prefix)
         return BlueprintBase(name, import_name, url_prefix=url_prefix)
