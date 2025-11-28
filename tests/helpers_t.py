@@ -84,3 +84,17 @@ class TestHelpers(TestCaseBase):
         # from form
         request.form['arg1'] = 'fsuccess'
         self.assertEqual(get_request_arg(request, 'arg1'), 'fsuccess')
+        # via get_json helper (ensures silent parsing)
+        class _JsonMethodRequest():
+            form = {}
+
+            def __init__(self):
+                self._payload = {'arg1': 'msuccess'}
+
+            def get_json(self, silent=False):
+                if not silent:
+                    raise ValueError('get_json must be called in silent mode')
+                return self._payload
+
+        request_method = _JsonMethodRequest()
+        self.assertEqual(get_request_arg(request_method, 'arg1'), 'msuccess')
